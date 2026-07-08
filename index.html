@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Wonly 社媒管理系统，用于团队规划内容、跟进发布状态、追踪平台表现和做 Go/No-Go 复盘。"
+    />
+    <meta name="theme-color" content="#121a18" />
+    <meta property="og:title" content="Wonly 社媒管理系统" />
+    <meta property="og:description" content="公开可访问的社媒内容规划与数据追踪工作台。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="assets/wonly-security-studio.png" />
+    <title>Wonly 社媒管理系统</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">W</div>
+          <div>
+            <strong>Wonly Social</strong>
+            <span>Phase 1 工作台</span>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item active" data-view="overview" aria-label="总览">
+            <span class="icon" aria-hidden="true">⌂</span>
+            <span>总览</span>
+          </button>
+          <button class="nav-item" data-view="calendar" aria-label="内容日历">
+            <span class="icon" aria-hidden="true">□</span>
+            <span>内容日历</span>
+          </button>
+          <button class="nav-item" data-view="library" aria-label="内容库">
+            <span class="icon" aria-hidden="true">▤</span>
+            <span>内容库</span>
+          </button>
+          <button class="nav-item" data-view="analytics" aria-label="数据追踪">
+            <span class="icon" aria-hidden="true">⌁</span>
+            <span>数据追踪</span>
+          </button>
+          <button class="nav-item" data-view="settings" aria-label="连接设置">
+            <span class="icon" aria-hidden="true">⚙</span>
+            <span>连接设置</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-note">
+          <span>本周焦点</span>
+          <strong id="sidebarFocus">Series 1 · 只有王力有</strong>
+          <small>单周单系列，数据归因更清晰</small>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Wonly Security · Social Command Center</p>
+            <h1>内容规划、执行追踪和成效复盘集中在一个工作台</h1>
+          </div>
+          <div class="actions">
+            <button class="icon-button" id="exportButton" title="导出当前排期" aria-label="导出当前排期">
+              <span aria-hidden="true">⇩</span>
+            </button>
+            <button class="primary-button" data-view-jump="calendar">
+              <span aria-hidden="true">＋</span>
+              新建内容
+            </button>
+          </div>
+        </header>
+
+        <section class="hero-panel">
+          <div class="hero-copy">
+            <span class="status-pill">Phase 1 · 2025.07-09</span>
+            <h2>12 周轮换测试节奏</h2>
+            <p>每周聚焦一个系列，围绕 TikTok、Instagram、YouTube、LinkedIn、Facebook、Twitter/X 做内容适配、发布和数据判断。</p>
+            <div class="hero-metrics">
+              <div><strong>74</strong><span>预估内容产出</span></div>
+              <div><strong>4</strong><span>内容系列</span></div>
+              <div><strong>6</strong><span>覆盖平台</span></div>
+            </div>
+          </div>
+          <img src="assets/wonly-security-studio.png" alt="Wonly 智能安防门内容工作室视觉图" />
+        </section>
+
+        <section class="view active" id="overview">
+          <div class="section-heading">
+            <div>
+              <h2>项目总览</h2>
+              <p>快速看清系列定位、平台覆盖和当前执行风险。</p>
+            </div>
+            <div class="segmented" role="tablist" aria-label="月份">
+              <button class="active" data-month="all">全部</button>
+              <button data-month="7">7月</button>
+              <button data-month="8">8月</button>
+              <button data-month="9">9月</button>
+            </div>
+          </div>
+
+          <div class="series-grid" id="seriesGrid"></div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <h3>本周任务</h3>
+                <span>拍摄 · 剪辑 · 审核 · 发布</span>
+              </div>
+              <div class="task-list" id="taskList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3>平台矩阵</h3>
+                <span>形式和频率基准</span>
+              </div>
+              <div class="platform-list" id="platformList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="calendar">
+          <div class="section-heading">
+            <div>
+              <h2>内容日历</h2>
+              <p>按周查看每个系列在各平台的发布安排。</p>
+            </div>
+            <label class="select-label">
+              <span>系列筛选</span>
+              <select id="seriesFilter">
+                <option value="all">全部系列</option>
+              </select>
+            </label>
+          </div>
+          <div class="calendar-board" id="calendarBoard"></div>
+        </section>
+
+        <section class="view" id="library">
+          <div class="section-heading">
+            <div>
+              <h2>内容库</h2>
+              <p>每条内容都带有平台适配、脚本状态和负责人。</p>
+            </div>
+            <div class="search-box">
+              <span aria-hidden="true">⌕</span>
+              <input id="contentSearch" type="search" placeholder="搜索标题、系列、平台" />
+            </div>
+          </div>
+          <div class="content-table-wrap">
+            <table class="content-table">
+              <thead>
+                <tr>
+                  <th>内容</th>
+                  <th>平台</th>
+                  <th>状态</th>
+                  <th>负责人</th>
+                  <th>目标</th>
+                </tr>
+              </thead>
+              <tbody id="contentRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="analytics">
+          <div class="section-heading">
+            <div>
+              <h2>数据追踪</h2>
+              <p>发布后每日录入核心指标，2 周后做 Go/No-Go 判断。</p>
+            </div>
+            <button class="ghost-button" id="simulateButton">
+              <span aria-hidden="true">↻</span>
+              模拟更新
+            </button>
+          </div>
+          <div class="analytics-grid" id="analyticsGrid"></div>
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Go/No-Go 规则</h3>
+              <span>发布后 2 周评估</span>
+            </div>
+            <div class="rules">
+              <div><strong>Go</strong><span>完播率和互动率均达到基准，粉丝增长为正</span></div>
+              <div><strong>优化重测</strong><span>介于达标和低效之间，调整 Hook、时长或字幕后重发</span></div>
+              <div><strong>No-Go</strong><span>完播率或互动率低于基准 50%，暂停同题材投入</span></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="settings">
+          <div class="section-heading">
+            <div>
+              <h2>连接设置</h2>
+              <p>GitHub 和域名部署入口已预留，等你提供账号和域名后即可上线。</p>
+            </div>
+          </div>
+          <div class="connect-grid">
+            <section class="panel connect-panel">
+              <div class="connect-icon">GH</div>
+              <h3>GitHub Pages</h3>
+              <p>把当前文件夹上传到 GitHub 仓库，启用 Pages 后即可公开访问。</p>
+              <ol>
+                <li>创建仓库，例如 <code>wonly-social-dashboard</code></li>
+                <li>上传 <code>index.html</code>、<code>styles.css</code>、<code>app.js</code> 和 <code>assets</code></li>
+                <li>在仓库 Settings → Pages 选择主分支发布</li>
+              </ol>
+            </section>
+            <section class="panel connect-panel">
+              <div class="connect-icon">DNS</div>
+              <h3>自定义域名</h3>
+              <p>我已准备 <code>CNAME</code> 文件，你把里面的域名替换成自己的即可。</p>
+              <ol>
+                <li>在域名 DNS 添加 CNAME 到 GitHub Pages 地址</li>
+                <li>在 GitHub Pages 填入同一个域名</li>
+                <li>等待 HTTPS 证书自动签发</li>
+              </ol>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

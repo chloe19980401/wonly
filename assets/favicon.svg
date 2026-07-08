@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Wonly Social">
+  <rect width="64" height="64" rx="12" fill="#121a18"/>
+  <path d="M15 18h7l5 23 6-23h6l6 23 5-23h7L49 48h-8l-5-19-5 19h-8L15 18z" fill="#ffffff"/>
+  <circle cx="50" cy="14" r="5" fill="#0f8f61"/>
+</svg>
