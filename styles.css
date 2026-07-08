@@ -833,36 +833,39 @@ select {
   display: inline-flex;
   min-height: 28px;
   align-items: center;
+  border: 1px solid #bfd2f3;
   border-radius: 999px;
   padding: 0 9px;
+  background: #ffffff;
+  color: var(--blue);
   font-size: 12px;
   font-weight: 800;
 }
 
 .status.todo {
-  background: #eef3f1;
-  color: #52625d;
+  background: #ffffff;
+  color: var(--blue);
 }
 
 .status.progress {
-  background: #e7f0ff;
+  background: #ffffff;
   color: var(--blue);
 }
 
 .status.review {
-  background: #fff1dd;
-  color: var(--amber);
+  background: #ffffff;
+  color: var(--blue);
 }
 
 .status.ready,
 .status.go {
-  background: #e5f5ee;
-  color: var(--green-dark);
+  background: #ffffff;
+  color: var(--blue);
 }
 
 .status.risk {
-  background: #ffe8e8;
-  color: var(--red);
+  background: #ffffff;
+  color: var(--blue);
 }
 
 .table-action {
@@ -988,6 +991,30 @@ select {
   gap: 14px;
 }
 
+.okr-primer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.okr-primer div {
+  padding: 14px;
+  border-radius: 8px;
+  background: #f7faf9;
+}
+
+.okr-primer strong,
+.okr-primer span {
+  display: block;
+}
+
+.okr-primer span {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .okr-card {
   display: grid;
   gap: 14px;
@@ -1052,6 +1079,28 @@ select {
   background: #f7faf9;
 }
 
+.kr-list {
+  display: grid;
+  gap: 8px;
+}
+
+.kr-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f7faf9;
+}
+
+.kr-list span {
+  color: var(--muted);
+}
+
+.kr-list strong {
+  color: var(--blue);
+}
+
 .okr-topics {
   display: flex;
   flex-wrap: wrap;
@@ -1107,6 +1156,111 @@ select {
 
 .post-head span {
   color: var(--ink);
+}
+
+.editable-row {
+  cursor: pointer;
+}
+
+.editable-row:hover {
+  background: #f7fbff;
+}
+
+.system-edit-panel {
+  margin-top: 14px;
+}
+
+.system-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.system-edit-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.system-edit-list section {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f7faf9;
+}
+
+.system-edit-list h4 {
+  margin: 0 0 4px;
+}
+
+.system-edit-list button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.edit-card {
+  width: min(1080px, 100%);
+}
+
+.edit-form {
+  padding: 22px 30px 30px;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.edit-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.edit-grid label.wide {
+  grid-column: span 2;
+}
+
+.edit-grid input,
+.edit-grid select,
+.edit-grid textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #ffffff;
+  outline: 0;
+}
+
+.edit-grid textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.edit-grid input:focus,
+.edit-grid select:focus,
+.edit-grid textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(47, 100, 183, 0.12);
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .metric-card {
@@ -1197,6 +1351,9 @@ code {
   .series-grid,
   .analytics-grid,
   .okr-grid,
+  .okr-primer,
+  .system-edit-grid,
+  .system-edit-list,
   .bundle-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1278,13 +1435,18 @@ code {
   .calendar-board,
   .analytics-grid,
   .okr-grid,
+  .okr-primer,
+  .system-edit-grid,
+  .system-edit-list,
   .rules,
   .bundle-grid,
-  .detail-grid {
+  .detail-grid,
+  .edit-grid {
     grid-template-columns: 1fr;
   }
 
-  .detail-script {
+  .detail-script,
+  .edit-grid label.wide {
     grid-column: auto;
   }
 

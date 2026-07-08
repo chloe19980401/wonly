@@ -73,7 +73,7 @@
             <span class="admin-pill">管理员 · chloelee</span>
             <button class="icon-button" id="exportButton" title="导出排期" aria-label="导出排期">⇩</button>
             <button class="icon-button" id="logoutButton" title="退出登录" aria-label="退出登录">⎋</button>
-            <button class="primary-button" data-view-jump="calendar"><span>＋</span>新建内容</button>
+            <button class="primary-button" id="newTopicButton"><span>＋</span>新建内容</button>
           </div>
         </header>
 
@@ -165,9 +165,15 @@
           <div class="section-heading">
             <div>
               <h2>运营 OKR</h2>
-              <p>主题会自动计入负责人的 OKR，发布链接和数据会影响完成率。</p>
+              <p>OKR 按月设定 Objective 和 Key Results，用实际结果计算每个成员的月度完成率。</p>
             </div>
+            <div class="segmented" id="okrMonthTabs" role="tablist" aria-label="OKR 月份"></div>
           </div>
+          <section class="panel okr-primer">
+            <div><strong>Objective</strong><span>本月想达成的明确目标，表达方向和结果，不是岗位职责。</span></div>
+            <div><strong>Key Results</strong><span>衡量目标是否达成的关键结果，必须可量化，例如发帖数、播放量、完播率、线索数。</span></div>
+            <div><strong>完成率</strong><span>按每个 KR 的实际值 / 目标值计算，再汇总为成员月度绩效进度。</span></div>
+          </section>
           <div class="okr-grid" id="okrGrid"></div>
         </section>
 
@@ -214,6 +220,10 @@
               <p>下一阶段可接入 YouTube Data API、Meta Graph API、TikTok Business API 和 LinkedIn API，把帖子链接转成真实播放、互动和转粉数据。</p>
             </section>
           </div>
+          <section class="panel system-edit-panel">
+            <div class="panel-head"><h3>系统内容编辑</h3><span>系列、平台组合、成员和月度 OKR 都可以在这里修改</span></div>
+            <div id="systemEditor"></div>
+          </section>
         </section>
       </main>
 
@@ -233,6 +243,18 @@
             <section class="detail-script"><h3>脚本结构</h3><p id="detailScript"></p></section>
             <section><h3>时间计划</h3><div class="detail-times" id="detailTimes"></div></section>
           </div>
+        </section>
+      </div>
+
+      <div class="modal" id="editModal" hidden>
+        <section class="modal-card edit-card" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+          <button class="icon-button modal-close" id="closeEditButton" aria-label="关闭编辑">×</button>
+          <div class="detail-head">
+            <span class="status-pill" id="editScope"></span>
+            <h2 id="editTitle">编辑</h2>
+            <p id="editHint"></p>
+          </div>
+          <form class="edit-form" id="editForm"></form>
         </section>
       </div>
     </div>
