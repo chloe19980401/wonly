@@ -106,11 +106,11 @@
           <div class="hero-copy">
             <span class="status-pill">Phase 1 · 2025.07-09</span>
             <h2>12 周轮换测试节奏</h2>
-            <p>每周聚焦一个系列，围绕 TikTok、Instagram、YouTube、LinkedIn、Facebook、Twitter/X 做内容适配、发布和数据判断。</p>
+            <p>每周聚焦一个系列，围绕 YouTube、Instagram、TikTok、Facebook、LinkedIn 做内容适配、发布和数据判断。</p>
             <div class="hero-metrics">
               <div><strong>74</strong><span>预估内容产出</span></div>
               <div><strong>4</strong><span>内容系列</span></div>
-              <div><strong>6</strong><span>覆盖平台</span></div>
+              <div><strong>5</strong><span>覆盖平台</span></div>
             </div>
           </div>
           <img src="assets/wonly-security-studio.png" alt="Wonly 智能安防门内容工作室视觉图" />
@@ -131,6 +131,14 @@
           </div>
 
           <div class="series-grid" id="seriesGrid"></div>
+
+          <section class="panel bundle-panel">
+            <div class="panel-head">
+              <h3>通用素材平台组合</h3>
+              <span>一次制作，多平台分发</span>
+            </div>
+            <div class="bundle-grid" id="bundleGrid"></div>
+          </section>
 
           <div class="dashboard-grid">
             <section class="panel">
@@ -170,8 +178,8 @@
         <section class="view" id="library">
           <div class="section-heading">
             <div>
-              <h2>内容库</h2>
-              <p>每条内容都带有平台适配、脚本状态和负责人。</p>
+              <h2>系列主题库</h2>
+              <p>按系列查看主题、适配平台组合、素材、脚本和拍摄发布计划。</p>
             </div>
             <div class="search-box">
               <span aria-hidden="true">⌕</span>
@@ -187,6 +195,7 @@
                   <th>状态</th>
                   <th>负责人</th>
                   <th>目标</th>
+                  <th>详情</th>
                 </tr>
               </thead>
               <tbody id="contentRows"></tbody>
@@ -250,6 +259,35 @@
           </div>
         </section>
       </main>
+
+      <div class="modal" id="detailModal" hidden>
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+          <button class="icon-button modal-close" id="closeDetailButton" aria-label="关闭详情">×</button>
+          <div class="detail-head">
+            <span class="status-pill" id="detailSeries"></span>
+            <h2 id="detailTitle"></h2>
+            <p id="detailSubtitle"></p>
+          </div>
+          <div class="detail-grid">
+            <section>
+              <h3>适配平台</h3>
+              <div class="platform-chips" id="detailPlatforms"></div>
+            </section>
+            <section>
+              <h3>参考素材</h3>
+              <ul class="detail-list" id="detailReferences"></ul>
+            </section>
+            <section class="detail-script">
+              <h3>脚本结构</h3>
+              <p id="detailScript"></p>
+            </section>
+            <section>
+              <h3>时间计划</h3>
+              <div class="detail-times" id="detailTimes"></div>
+            </section>
+          </div>
+        </section>
+      </div>
     </div>
 
     <script src="app.js"></script>
