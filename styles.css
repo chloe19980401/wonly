@@ -25,6 +25,110 @@ body {
   font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
 }
 
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
+  background: #101816;
+}
+
+.login-visual {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 54px;
+  color: white;
+  background:
+    linear-gradient(120deg, rgba(16, 24, 22, 0.78), rgba(16, 24, 22, 0.92)),
+    url("assets/wonly-security-studio.png") center / cover;
+}
+
+.login-mark {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 26px;
+  border-radius: 8px;
+  background: var(--green);
+  color: white;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.login-visual h1 {
+  max-width: 560px;
+  margin-bottom: 14px;
+  font-size: 44px;
+}
+
+.login-visual p:not(.eyebrow) {
+  max-width: 560px;
+  color: #d5e1dd;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.login-card {
+  align-self: center;
+  width: min(430px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.login-card h2 {
+  margin-bottom: 22px;
+  font-size: 25px;
+}
+
+.login-card label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-card input {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: #f9fbfa;
+  outline: 0;
+}
+
+.login-card input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(15, 143, 97, 0.12);
+}
+
+.login-error {
+  min-height: 22px;
+  margin-bottom: 10px;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.login-card small {
+  display: block;
+  margin-top: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
 button,
 input,
 select {
@@ -175,6 +279,20 @@ h1 {
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+}
+
+.admin-pill {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid #cce5d8;
+  border-radius: 999px;
+  background: #e8f7ef;
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .icon-button,
@@ -745,6 +863,23 @@ code {
 }
 
 @media (max-width: 860px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    min-height: 42vh;
+    padding: 34px 22px;
+  }
+
+  .login-visual h1 {
+    font-size: 32px;
+  }
+
+  .login-card {
+    margin: 24px auto;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
   }

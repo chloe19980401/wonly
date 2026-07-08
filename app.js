@@ -98,8 +98,59 @@ const statusClass = {
   待分镜: "todo",
 };
 
+const ADMIN_USERNAME = "chloelee";
+const ADMIN_PASSWORD_HASH = "df3dcfc0245fb6d3f508523001b0979446249420e3dc4b0081785035fc90a998";
+const SESSION_KEY = "wonly-admin-session";
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function showApp() {
+  $("#loginScreen").hidden = true;
+  $("#appShell").hidden = false;
+}
+
+function showLogin() {
+  $("#loginScreen").hidden = false;
+  $("#appShell").hidden = true;
+  $("#passwordInput").value = "";
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const username = $("#usernameInput").value.trim();
+  const passwordHash = await sha256($("#passwordInput").value);
+
+  if (username === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user: ADMIN_USERNAME, role: "admin", signedInAt: Date.now() }));
+    $("#loginError").textContent = "";
+    showApp();
+    return;
+  }
+
+  $("#loginError").textContent = "用户名或密码不正确";
+}
+
+function bindAuth() {
+  $("#loginForm").addEventListener("submit", handleLogin);
+  $("#logoutButton").addEventListener("click", () => {
+    localStorage.removeItem(SESSION_KEY);
+    showLogin();
+  });
+
+  const session = localStorage.getItem(SESSION_KEY);
+  if (session) {
+    showApp();
+  } else {
+    showLogin();
+  }
+}
 
 function getSeries(id) {
   return series.find((item) => item.id === id);
@@ -285,3 +336,4 @@ renderCalendar();
 renderContentTable();
 renderAnalytics();
 bindEvents();
+bindAuth();

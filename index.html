@@ -18,7 +18,30 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <section class="login-screen" id="loginScreen" aria-label="登录">
+      <div class="login-visual">
+        <div class="login-mark">W</div>
+        <p class="eyebrow">Wonly Security · Admin Access</p>
+        <h1>社媒管理系统</h1>
+        <p>请输入管理员账号后进入内容规划、排期和数据追踪工作台。</p>
+      </div>
+      <form class="login-card" id="loginForm">
+        <h2>管理员登录</h2>
+        <label>
+          <span>用户名</span>
+          <input id="usernameInput" name="username" autocomplete="username" required />
+        </label>
+        <label>
+          <span>密码</span>
+          <input id="passwordInput" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p class="login-error" id="loginError" role="alert"></p>
+        <button class="primary-button login-button" type="submit">登录系统</button>
+        <small>管理员权限 · 本设备会保持登录状态</small>
+      </form>
+    </section>
+
+    <div class="app-shell" id="appShell" hidden>
       <aside class="sidebar" aria-label="主导航">
         <div class="brand">
           <div class="brand-mark">W</div>
@@ -65,8 +88,12 @@
             <h1>内容规划、执行追踪和成效复盘集中在一个工作台</h1>
           </div>
           <div class="actions">
+            <span class="admin-pill">管理员 · chloelee</span>
             <button class="icon-button" id="exportButton" title="导出当前排期" aria-label="导出当前排期">
               <span aria-hidden="true">⇩</span>
+            </button>
+            <button class="icon-button" id="logoutButton" title="退出登录" aria-label="退出登录">
+              <span aria-hidden="true">⎋</span>
             </button>
             <button class="primary-button" data-view-jump="calendar">
               <span aria-hidden="true">＋</span>
