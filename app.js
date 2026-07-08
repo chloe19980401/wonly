@@ -273,6 +273,7 @@ function okrScore(okr) {
 
 function renderOkrMonths() {
   const months = [...new Set(data.okrs.map((item) => item.month).concat(data.topics.map((item) => item.month)))].sort();
+  if (!months.length) months.push(activeMonth || defaultData.activeMonth);
   if (!months.includes(activeMonth)) activeMonth = months[0];
   $("#okrMonthTabs").innerHTML = months.map((month) => `<button class="${month === activeMonth ? "active" : ""}" data-okr-month="${month}">${monthLabel(month)}</button>`).join("");
 }
@@ -372,6 +373,10 @@ function renderSystemEditor() {
       <button class="ghost-button" data-new-topic="1">新增帖子主题</button>
       <button class="ghost-button" data-new-okr="1">新增月度 OKR</button>
       <button class="ghost-button" data-new-owner="1">新增成员</button>
+      <button class="ghost-button" data-new-series="1">新增系列</button>
+      <button class="ghost-button" data-new-bundle="1">新增平台组合</button>
+      <button class="ghost-button" data-export-data="1">导出全部数据</button>
+      <button class="ghost-button" data-import-data="1">导入/替换数据</button>
       <button class="ghost-button" data-reset-data="1">恢复默认数据</button>
     </div>
     <div class="system-edit-list">
@@ -407,6 +412,11 @@ function openTopicEditor(id) {
       numberField("engagement", "互动率 %", item.engagement || 0),
       numberField("followers", "转粉", item.followers || 0),
     ],
+    deleteLabel: item.id ? "删除帖子主题" : "",
+    onDelete: item.id ? () => {
+      data.topics = data.topics.filter((topicItem) => topicItem.id !== item.id);
+      saveAndRefresh();
+    } : null,
     onSave(values) {
       const next = {
         ...item,
@@ -424,13 +434,14 @@ function openTopicEditor(id) {
   });
 }
 
-function openSeriesEditor(id) {
-  const item = getSeries(id);
+function openSeriesEditor(id = "") {
+  const item = getSeries(id) ?? { id: "", code: "", name: "", position: "", audience: "", main: "", color: "#2f64b7", bundles: [] };
   openEditor({
     scope: "系统配置",
-    title: `编辑系列：${item.name}`,
+    title: item.id ? `编辑系列：${item.name}` : "新增系列",
     hint: "这里修改的是系统里的系列结构，会影响总览、日历和主题库。",
     fields: [
+      textField("id", "系列 ID", item.id),
       textField("code", "系列编号", item.code),
       textField("name", "系列名称", item.name),
       textField("position", "定位", item.position),
@@ -439,27 +450,79 @@ function openSeriesEditor(id) {
       textField("color", "颜色", item.color),
       textField("bundles", "平台组合 ID，用逗号分隔", item.bundles.join(",")),
     ],
+    deleteLabel: item.id ? "删除系列和关联主题" : "",
+    onDelete: item.id ? () => {
+      if (data.series.length <= 1) {
+        alert("至少保留一个系列。");
+        return;
+      }
+      data.series = data.series.filter((seriesItem) => seriesItem.id !== item.id);
+      data.topics = data.topics.filter((topicItem) => topicItem.seriesId !== item.id);
+      if (activeSeries === item.id) activeSeries = "all";
+      saveAndRefresh();
+    } : null,
     onSave(values) {
-      Object.assign(item, values, { bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean) });
+      const next = { ...item, ...values, id: values.id || idFrom(values.name), bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean) };
+      const index = data.series.findIndex((seriesItem) => seriesItem.id === item.id);
+      if (index >= 0) {
+        const oldId = data.series[index].id;
+        data.series[index] = next;
+        if (oldId !== next.id) data.topics.forEach((topicItem) => {
+          if (topicItem.seriesId === oldId) topicItem.seriesId = next.id;
+        });
+      } else {
+        data.series.push(next);
+      }
       saveAndRefresh();
     },
   });
 }
 
-function openBundleEditor(id) {
-  const item = getBundle(id);
+function openBundleEditor(id = "") {
+  const item = getBundle(id) ?? { id: "", name: "", platforms: [], format: "", usage: "" };
   openEditor({
     scope: "系统配置",
-    title: `编辑平台组合：${item.name}`,
+    title: item.id ? `编辑平台组合：${item.name}` : "新增平台组合",
     hint: "这里决定一个素材适合分发到哪些平台。",
     fields: [
+      textField("id", "组合 ID", item.id),
       textField("name", "组合名称", item.name),
       textField("platforms", "平台，用逗号分隔", item.platforms.join(",")),
       textField("format", "格式要求", item.format),
       textareaField("usage", "使用说明", item.usage),
     ],
+    deleteLabel: item.id ? "删除平台组合" : "",
+    onDelete: item.id ? () => {
+      if (data.platformBundles.length <= 1) {
+        alert("至少保留一个平台组合。");
+        return;
+      }
+      data.platformBundles = data.platformBundles.filter((bundle) => bundle.id !== item.id);
+      data.series.forEach((seriesItem) => {
+        seriesItem.bundles = seriesItem.bundles.filter((bundleId) => bundleId !== item.id);
+      });
+      data.topics.forEach((topicItem) => {
+        topicItem.bundles = topicItem.bundles.filter((bundleId) => bundleId !== item.id);
+      });
+      saveAndRefresh();
+    } : null,
     onSave(values) {
-      Object.assign(item, values, { platforms: values.platforms.split(",").map((value) => value.trim()).filter(Boolean) });
+      const next = { ...item, ...values, id: values.id || idFrom(values.name), platforms: values.platforms.split(",").map((value) => value.trim()).filter(Boolean) };
+      const index = data.platformBundles.findIndex((bundle) => bundle.id === item.id);
+      if (index >= 0) {
+        const oldId = data.platformBundles[index].id;
+        data.platformBundles[index] = next;
+        if (oldId !== next.id) {
+          data.series.forEach((seriesItem) => {
+            seriesItem.bundles = seriesItem.bundles.map((bundleId) => bundleId === oldId ? next.id : bundleId);
+          });
+          data.topics.forEach((topicItem) => {
+            topicItem.bundles = topicItem.bundles.map((bundleId) => bundleId === oldId ? next.id : bundleId);
+          });
+        }
+      } else {
+        data.platformBundles.push(next);
+      }
       saveAndRefresh();
     },
   });
@@ -472,19 +535,44 @@ function openOwnerEditor(name) {
     title: item.name ? `编辑成员：${item.name}` : "新增成员",
     hint: "成员用于分配帖子负责人和月度 OKR 绩效看板。",
     fields: [textField("name", "成员姓名", item.name), textField("title", "岗位/备注", item.title)],
+    deleteLabel: item.name ? "删除成员" : "",
+    onDelete: item.name ? () => {
+      if (data.owners.length <= 1) {
+        alert("至少保留一个成员。");
+        return;
+      }
+      const fallback = data.owners.find((owner) => owner.name !== item.name)?.name ?? "";
+      data.owners = data.owners.filter((owner) => owner.name !== item.name);
+      data.topics.forEach((topicItem) => {
+        if (topicItem.owner === item.name) topicItem.owner = fallback;
+      });
+      data.okrs = data.okrs.filter((okr) => okr.owner !== item.name);
+      saveAndRefresh();
+    } : null,
     onSave(values) {
-      if (!item.name) data.owners.push(values);
-      else Object.assign(item, values);
+      if (!item.name) {
+        data.owners.push(values);
+      } else {
+        const oldName = item.name;
+        Object.assign(item, values);
+        data.topics.forEach((topicItem) => {
+          if (topicItem.owner === oldName) topicItem.owner = values.name;
+        });
+        data.okrs.forEach((okr) => {
+          if (okr.owner === oldName) okr.owner = values.name;
+        });
+      }
       saveAndRefresh();
     },
   });
 }
 
 function openOkrEditor(id) {
+  const exists = data.okrs.some((okr) => okr.id === id);
   const item = data.okrs.find((okr) => okr.id === id) ?? monthlyOkr(activeMonth, data.owners[0]?.name ?? "", "新的月度 Objective", [["关键结果", 1, 0, ""]]);
   openEditor({
     scope: "月度 OKR",
-    title: item.id && data.okrs.some((okr) => okr.id === item.id) ? `编辑：${item.owner} ${monthLabel(item.month)}` : "新增月度 OKR",
+    title: exists ? `编辑：${item.owner} ${monthLabel(item.month)}` : "新增月度 OKR",
     hint: "OKR 是月度绩效管理工具：O 写方向，KR 写可量化结果，完成率由实际值/目标值计算。",
     fields: [
       monthField("month", "月份", item.month),
@@ -492,6 +580,11 @@ function openOkrEditor(id) {
       textareaField("objective", "Objective", item.objective),
       textareaField("keyResultsText", "Key Results，每行：名称 | 目标 | 实际 | 单位", item.keyResults.map((kr) => `${kr.name} | ${kr.target} | ${kr.actual} | ${kr.unit}`).join("\n")),
     ],
+    deleteLabel: exists ? "删除月度 OKR" : "",
+    onDelete: exists ? () => {
+      data.okrs = data.okrs.filter((okr) => okr.id !== item.id);
+      saveAndRefresh();
+    } : null,
     onSave(values) {
       const next = {
         ...item,
@@ -513,13 +606,48 @@ function openOkrEditor(id) {
   });
 }
 
+function openDataImportEditor() {
+  openEditor({
+    scope: "数据管理",
+    title: "导入/替换全部数据",
+    hint: "粘贴从系统导出的 JSON，会替换当前本机保存的数据。建议先导出备份。",
+    fields: [textareaField("json", "系统数据 JSON", JSON.stringify(data, null, 2))],
+    onSave(values) {
+      try {
+        const next = JSON.parse(values.json);
+        validateImportedData(next);
+        data = next;
+        activeMonth = data.activeMonth || defaultData.activeMonth;
+        activeSeries = "all";
+        saveAndRefresh();
+      } catch (error) {
+        alert(`导入失败：${error.message}`);
+        return false;
+      }
+      return true;
+    },
+  });
+}
+
+function validateImportedData(next) {
+  ["owners", "platformBundles", "series", "topics", "okrs"].forEach((key) => {
+    if (!Array.isArray(next[key])) throw new Error(`缺少 ${key} 列表`);
+  });
+  if (!next.owners.length) throw new Error("至少需要一个成员");
+  if (!next.series.length) throw new Error("至少需要一个系列");
+  if (!next.platformBundles.length) throw new Error("至少需要一个平台组合");
+}
+
 function openEditor(config) {
   $("#editScope").textContent = config.scope;
   $("#editTitle").textContent = config.title;
   $("#editHint").textContent = config.hint;
+  const deleteButton = config.onDelete ? `<button class="danger-button" type="button" id="deleteEditButton">${config.deleteLabel || "删除"}</button>` : "";
   $("#editForm").innerHTML = `
     <div class="edit-grid">${config.fields.join("")}</div>
     <div class="edit-actions">
+      ${deleteButton}
+      <span class="edit-spacer"></span>
       <button class="ghost-button" type="button" id="cancelEditButton">取消</button>
       <button class="primary-button" type="submit">保存修改</button>
     </div>
@@ -527,9 +655,16 @@ function openEditor(config) {
   $("#editForm").onsubmit = (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget).entries());
-    config.onSave(values);
-    closeEditor();
+    const shouldClose = config.onSave(values);
+    if (shouldClose !== false) closeEditor();
   };
+  if (config.onDelete) {
+    $("#deleteEditButton").onclick = () => {
+      if (!confirm("确定删除？删除后当前浏览器里的这项数据会被移除。")) return;
+      config.onDelete();
+      closeEditor();
+    };
+  }
   $("#cancelEditButton").onclick = closeEditor;
   $("#editModal").hidden = false;
 }
@@ -569,6 +704,16 @@ function closeEditor() {
 function saveAndRefresh() {
   saveData();
   renderAll();
+}
+
+function downloadJson() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `wonly-social-system-data-${activeMonth}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function downloadSchedule() {
@@ -615,7 +760,7 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-okr],[data-new-owner],[data-reset-data]");
+    const target = event.target.closest("[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-okr],[data-new-owner],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
@@ -629,6 +774,10 @@ function bindEvents() {
     if (target.dataset.newTopic) openTopicEditor();
     if (target.dataset.newOkr) openOkrEditor();
     if (target.dataset.newOwner) openOwnerEditor();
+    if (target.dataset.newSeries) openSeriesEditor();
+    if (target.dataset.newBundle) openBundleEditor();
+    if (target.dataset.exportData) downloadJson();
+    if (target.dataset.importData) openDataImportEditor();
     if (target.dataset.resetData && confirm("确定恢复默认数据？当前本机编辑会被清空。")) {
       localStorage.removeItem(DATA_KEY);
       data = loadData();
