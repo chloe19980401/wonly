@@ -3,157 +3,122 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Wonly 社媒管理系统，用于团队规划内容、跟进发布状态、追踪平台表现和做 Go/No-Go 复盘。"
-    />
+    <meta name="description" content="Wonly 绀惧獟绠＄悊绯荤粺锛岀敤浜庡洟闃熻鍒掑唴瀹广€佺鐞?OKR銆佽拷韪彂甯冩暟鎹拰澶嶇洏鎴愬姛缁忛獙銆? />
     <meta name="theme-color" content="#121a18" />
-    <meta property="og:title" content="Wonly 社媒管理系统" />
-    <meta property="og:description" content="公开可访问的社媒内容规划与数据追踪工作台。" />
+    <meta property="og:title" content="Wonly 绀惧獟绠＄悊绯荤粺" />
+    <meta property="og:description" content="鍏紑鍙闂殑绀惧獟鍐呭瑙勫垝涓庤繍钀?OKR 宸ヤ綔鍙般€? />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="assets/wonly-security-studio.png" />
-    <title>Wonly 社媒管理系统</title>
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <title>Wonly 绀惧獟绠＄悊绯荤粺</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <section class="login-screen" id="loginScreen" aria-label="登录">
+    <section class="login-screen" id="loginScreen" aria-label="鐧诲綍">
       <div class="login-visual">
         <div class="login-mark">W</div>
-        <p class="eyebrow">Wonly Security · Admin Access</p>
-        <h1>社媒管理系统</h1>
-        <p>请输入管理员账号后进入内容规划、排期和数据追踪工作台。</p>
+        <p class="eyebrow">Wonly Security 路 Admin Access</p>
+        <h1>绀惧獟绠＄悊绯荤粺</h1>
+        <p>鐧诲綍鍚庣鐞嗙郴鍒楀唴瀹广€佷富棰樿礋璐ｄ汉銆丱KR銆佸彂甯冮摼鎺ュ拰鏁版嵁杩借釜鐪嬫澘銆?/p>
       </div>
       <form class="login-card" id="loginForm">
-        <h2>管理员登录</h2>
+        <h2>绠＄悊鍛樼櫥褰?/h2>
         <label>
-          <span>用户名</span>
+          <span>鐢ㄦ埛鍚?/span>
           <input id="usernameInput" name="username" autocomplete="username" required />
         </label>
         <label>
-          <span>密码</span>
+          <span>瀵嗙爜</span>
           <input id="passwordInput" name="password" type="password" autocomplete="current-password" required />
         </label>
         <p class="login-error" id="loginError" role="alert"></p>
-        <button class="primary-button login-button" type="submit">登录系统</button>
-        <small>管理员权限 · 本设备会保持登录状态</small>
+        <button class="primary-button login-button" type="submit">鐧诲綍绯荤粺</button>
+        <small>绠＄悊鍛樻潈闄?路 鍏抽棴娴忚鍣ㄥ悗闇€瑕侀噸鏂扮櫥褰?/small>
       </form>
     </section>
 
     <div class="app-shell" id="appShell" hidden>
-      <aside class="sidebar" aria-label="主导航">
+      <aside class="sidebar" aria-label="涓诲鑸?>
         <div class="brand">
           <div class="brand-mark">W</div>
           <div>
             <strong>Wonly Social</strong>
-            <span>Phase 1 工作台</span>
+            <span>杩愯惀 OKR 宸ヤ綔鍙?/span>
           </div>
         </div>
 
         <nav class="nav">
-          <button class="nav-item active" data-view="overview" aria-label="总览">
-            <span class="icon" aria-hidden="true">⌂</span>
-            <span>总览</span>
-          </button>
-          <button class="nav-item" data-view="calendar" aria-label="内容日历">
-            <span class="icon" aria-hidden="true">□</span>
-            <span>内容日历</span>
-          </button>
-          <button class="nav-item" data-view="library" aria-label="内容库">
-            <span class="icon" aria-hidden="true">▤</span>
-            <span>内容库</span>
-          </button>
-          <button class="nav-item" data-view="analytics" aria-label="数据追踪">
-            <span class="icon" aria-hidden="true">⌁</span>
-            <span>数据追踪</span>
-          </button>
-          <button class="nav-item" data-view="settings" aria-label="连接设置">
-            <span class="icon" aria-hidden="true">⚙</span>
-            <span>连接设置</span>
-          </button>
+          <button class="nav-item active" data-view="overview"><span class="icon">鈱?/span><span>鎬昏</span></button>
+          <button class="nav-item" data-view="calendar"><span class="icon">鈻?/span><span>鍐呭鏃ュ巻</span></button>
+          <button class="nav-item" data-view="library"><span class="icon">鈻?/span><span>涓婚搴?/span></button>
+          <button class="nav-item" data-view="okr"><span class="icon">鈼?/span><span>OKR</span></button>
+          <button class="nav-item" data-view="analytics"><span class="icon">鈫?/span><span>鏁版嵁鐪嬫澘</span></button>
+          <button class="nav-item" data-view="settings"><span class="icon">鈿?/span><span>璁剧疆</span></button>
         </nav>
 
         <div class="sidebar-note">
-          <span>本周焦点</span>
-          <strong id="sidebarFocus">Series 1 · 只有王力有</strong>
-          <small>单周单系列，数据归因更清晰</small>
+          <span>鏈懆鐒︾偣</span>
+          <strong id="sidebarFocus">S1 路 鍙湅鐜嬪姏闂?/strong>
+          <small>涓€鍛ㄤ竴绯诲垪锛屼富棰樿礋璐ｄ汉璁″叆涓汉 OKR銆?/small>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Wonly Security · Social Command Center</p>
-            <h1>内容规划、执行追踪和成效复盘集中在一个工作台</h1>
+            <p class="eyebrow">Wonly Security 路 Social Command Center</p>
+            <h1>鍐呭瑙勫垝銆佽礋璐ｄ汉 OKR銆佸彂甯冩暟鎹拰澶嶇洏鍒ゆ柇闆嗕腑鍦ㄤ竴涓伐浣滃彴</h1>
           </div>
           <div class="actions">
-            <span class="admin-pill">管理员 · chloelee</span>
-            <button class="icon-button" id="exportButton" title="导出当前排期" aria-label="导出当前排期">
-              <span aria-hidden="true">⇩</span>
-            </button>
-            <button class="icon-button" id="logoutButton" title="退出登录" aria-label="退出登录">
-              <span aria-hidden="true">⎋</span>
-            </button>
-            <button class="primary-button" data-view-jump="calendar">
-              <span aria-hidden="true">＋</span>
-              新建内容
-            </button>
+            <span class="admin-pill">绠＄悊鍛?路 chloelee</span>
+            <button class="icon-button" id="exportButton" title="瀵煎嚭鎺掓湡" aria-label="瀵煎嚭鎺掓湡">鈬?/button>
+            <button class="icon-button" id="logoutButton" title="閫€鍑虹櫥褰? aria-label="閫€鍑虹櫥褰?>鈳?/button>
+            <button class="primary-button" data-view-jump="calendar"><span>锛?/span>鏂板缓鍐呭</button>
           </div>
         </header>
 
         <section class="hero-panel">
           <div class="hero-copy">
-            <span class="status-pill">Phase 1 · 2025.07-09</span>
-            <h2>12 周轮换测试节奏</h2>
-            <p>每周聚焦一个系列，围绕 YouTube、Instagram、TikTok、Facebook、LinkedIn 做内容适配、发布和数据判断。</p>
+            <span class="status-pill">Phase 1 路 12 鍛ㄥ唴瀹规祴璇?/span>
+            <h2>浠庣郴鍒楄鍒掑埌 OKR 褰掑洜</h2>
+            <p>鍥寸粫 YouTube銆両nstagram銆乀ikTok銆丗acebook銆丩inkedIn 鍋氬钩鍙扮粍鍚堛€佷富棰樿礋璐ｄ汉銆佽剼鏈礌鏉愩€佸彂甯冩椂闂村拰鏁版嵁澶嶇洏銆?/p>
             <div class="hero-metrics">
-              <div><strong>74</strong><span>预估内容产出</span></div>
-              <div><strong>4</strong><span>内容系列</span></div>
-              <div><strong>5</strong><span>覆盖平台</span></div>
+              <div><strong id="topicCount">0</strong><span>涓婚</span></div>
+              <div><strong id="ownerCount">0</strong><span>璐熻矗浜?/span></div>
+              <div><strong>5</strong><span>骞冲彴</span></div>
             </div>
           </div>
-          <img src="assets/wonly-security-studio.png" alt="Wonly 智能安防门内容工作室视觉图" />
+          <img src="assets/wonly-security-studio.png" alt="Wonly 鏅鸿兘瀹夐槻闂ㄥ唴瀹瑰伐浣滃瑙嗚鍥? />
         </section>
 
         <section class="view active" id="overview">
           <div class="section-heading">
             <div>
-              <h2>项目总览</h2>
-              <p>快速看清系列定位、平台覆盖和当前执行风险。</p>
+              <h2>椤圭洰鎬昏</h2>
+              <p>鐐瑰嚮绯诲垪鍙煡鐪嬭绯诲垪涓嬬殑涓婚锛涢€氱敤绱犳潗浼氳嚜鍔ㄥ綊鍒伴€傚悎鐨勫钩鍙扮粍鍚堛€?/p>
             </div>
-            <div class="segmented" role="tablist" aria-label="月份">
-              <button class="active" data-month="all">全部</button>
-              <button data-month="7">7月</button>
-              <button data-month="8">8月</button>
-              <button data-month="9">9月</button>
+            <div class="segmented" role="tablist" aria-label="鏈堜唤">
+              <button class="active" data-month="all">鍏ㄩ儴</button>
+              <button data-month="7">7鏈?/button>
+              <button data-month="8">8鏈?/button>
+              <button data-month="9">9鏈?/button>
             </div>
           </div>
-
           <div class="series-grid" id="seriesGrid"></div>
-
           <section class="panel bundle-panel">
             <div class="panel-head">
-              <h3>通用素材平台组合</h3>
-              <span>一次制作，多平台分发</span>
+              <h3>閫氱敤绱犳潗骞冲彴缁勫悎</h3>
+              <span>涓€娆″埗浣滐紝澶氬钩鍙伴€傞厤</span>
             </div>
             <div class="bundle-grid" id="bundleGrid"></div>
           </section>
-
           <div class="dashboard-grid">
             <section class="panel">
-              <div class="panel-head">
-                <h3>本周任务</h3>
-                <span>拍摄 · 剪辑 · 审核 · 发布</span>
-              </div>
+              <div class="panel-head"><h3>鏈懆浠诲姟</h3><span>鑴氭湰 路 鎷嶆憚 路 鍙戝竷 路 鏁版嵁</span></div>
               <div class="task-list" id="taskList"></div>
             </section>
-
             <section class="panel">
-              <div class="panel-head">
-                <h3>平台矩阵</h3>
-                <span>形式和频率基准</span>
-              </div>
+              <div class="panel-head"><h3>骞冲彴鐭╅樀</h3><span>褰㈠紡鍜岄鐜囧熀鍑?/span></div>
               <div class="platform-list" id="platformList"></div>
             </section>
           </div>
@@ -162,15 +127,10 @@
         <section class="view" id="calendar">
           <div class="section-heading">
             <div>
-              <h2>内容日历</h2>
-              <p>按周查看每个系列在各平台的发布安排。</p>
+              <h2>鍐呭鏃ュ巻</h2>
+              <p>鎸夊懆鏌ョ湅姣忎釜绯诲垪鐨勪富棰樸€佸钩鍙扮粍鍚堝拰璐熻矗浜恒€?/p>
             </div>
-            <label class="select-label">
-              <span>系列筛选</span>
-              <select id="seriesFilter">
-                <option value="all">全部系列</option>
-              </select>
-            </label>
+            <label class="select-label"><span>绯诲垪绛涢€?/span><select id="seriesFilter"><option value="all">鍏ㄩ儴绯诲垪</option></select></label>
           </div>
           <div class="calendar-board" id="calendarBoard"></div>
         </section>
@@ -178,24 +138,22 @@
         <section class="view" id="library">
           <div class="section-heading">
             <div>
-              <h2>系列主题库</h2>
-              <p>按系列查看主题、适配平台组合、素材、脚本和拍摄发布计划。</p>
+              <h2>绯诲垪涓婚搴?/h2>
+              <p>姣忎釜涓婚閮藉寘鍚礋璐ｄ汉銆丱KR銆佸弬鑰冪礌鏉愩€佽剼鏈€佹媿鎽勬椂闂淬€佸彂甯冩椂闂村拰甯栧瓙閾炬帴銆?/p>
             </div>
-            <div class="search-box">
-              <span aria-hidden="true">⌕</span>
-              <input id="contentSearch" type="search" placeholder="搜索标题、系列、平台" />
-            </div>
+            <div class="search-box"><span>鈱?/span><input id="contentSearch" type="search" placeholder="鎼滅储涓婚銆佽礋璐ｄ汉銆佸钩鍙? /></div>
           </div>
           <div class="content-table-wrap">
             <table class="content-table">
               <thead>
                 <tr>
-                  <th>内容</th>
-                  <th>平台</th>
-                  <th>状态</th>
-                  <th>负责人</th>
-                  <th>目标</th>
-                  <th>详情</th>
+                  <th>涓婚</th>
+                  <th>骞冲彴</th>
+                  <th>鐘舵€?/th>
+                  <th>璐熻矗浜?/th>
+                  <th>OKR</th>
+                  <th>甯栧瓙閾炬帴</th>
+                  <th>璇︽儏</th>
                 </tr>
               </thead>
               <tbody id="contentRows"></tbody>
@@ -203,27 +161,35 @@
           </div>
         </section>
 
+        <section class="view" id="okr">
+          <div class="section-heading">
+            <div>
+              <h2>杩愯惀 OKR</h2>
+              <p>涓婚浼氳嚜鍔ㄨ鍏ヨ礋璐ｄ汉鐨?OKR锛屽彂甯冮摼鎺ュ拰鏁版嵁浼氬奖鍝嶅畬鎴愮巼銆?/p>
+            </div>
+          </div>
+          <div class="okr-grid" id="okrGrid"></div>
+        </section>
+
         <section class="view" id="analytics">
           <div class="section-heading">
             <div>
-              <h2>数据追踪</h2>
-              <p>发布后每日录入核心指标，2 周后做 Go/No-Go 判断。</p>
+              <h2>鏁版嵁鐪嬫澘</h2>
+              <p>涓婁紶甯栧瓙閾炬帴鍚庝細杩涘叆閲囬泦闃熷垪锛涘綋鍓嶉潤鎬佺増鍏堢敓鎴愬彲杩借釜鐪嬫澘锛屽悗缁彲鎺ュ钩鍙?API 鑷姩鎷夊彇銆?/p>
             </div>
-            <button class="ghost-button" id="simulateButton">
-              <span aria-hidden="true">↻</span>
-              模拟更新
-            </button>
+            <button class="ghost-button" id="simulateButton"><span>鈫?/span>鍒锋柊鏁版嵁</button>
           </div>
           <div class="analytics-grid" id="analyticsGrid"></div>
           <section class="panel">
-            <div class="panel-head">
-              <h3>Go/No-Go 规则</h3>
-              <span>发布后 2 周评估</span>
-            </div>
+            <div class="panel-head"><h3>甯栧瓙鏁版嵁杩借釜</h3><span>閾炬帴 路 骞冲彴 路 鎾斁 路 浜掑姩 路 Go/No-Go</span></div>
+            <div class="post-board" id="postBoard"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h3>Go/No-Go 瑙勫垯</h3><span>鍙戝竷鍚?2 鍛ㄨ瘎浼?/span></div>
             <div class="rules">
-              <div><strong>Go</strong><span>完播率和互动率均达到基准，粉丝增长为正</span></div>
-              <div><strong>优化重测</strong><span>介于达标和低效之间，调整 Hook、时长或字幕后重发</span></div>
-              <div><strong>No-Go</strong><span>完播率或互动率低于基准 50%，暂停同题材投入</span></div>
+              <div><strong>Go</strong><span>瀹屾挱鐜囧拰浜掑姩鐜囪揪鍒板熀鍑嗭紝缁х画鍔犵爜鍚岀被涓婚銆?/span></div>
+              <div><strong>浼樺寲閲嶆祴</strong><span>璋冩暣 Hook銆佹椂闀裤€佸瓧骞曟垨灏侀潰鍚庨噸鍙戙€?/span></div>
+              <div><strong>No-Go</strong><span>浣庝簬鍩哄噯 50%锛屾殏鍋滃悓棰樻潗鎶曞叆銆?/span></div>
             </div>
           </section>
         </section>
@@ -231,30 +197,21 @@
         <section class="view" id="settings">
           <div class="section-heading">
             <div>
-              <h2>连接设置</h2>
-              <p>GitHub 和域名部署入口已预留，等你提供账号和域名后即可上线。</p>
+              <h2>杩炴帴璁剧疆</h2>
+              <p>鍏紑绔欑偣宸茶繛鎺?GitHub Pages 鍜岃嚜瀹氫箟鍩熷悕銆傚钩鍙?API 鎺ュ叆鍚庡彲鑷姩閲囬泦甯栧瓙鏁版嵁銆?/p>
             </div>
           </div>
           <div class="connect-grid">
             <section class="panel connect-panel">
               <div class="connect-icon">GH</div>
               <h3>GitHub Pages</h3>
-              <p>把当前文件夹上传到 GitHub 仓库，启用 Pages 后即可公开访问。</p>
-              <ol>
-                <li>创建仓库，例如 <code>wonly-social-dashboard</code></li>
-                <li>上传 <code>index.html</code>、<code>styles.css</code>、<code>app.js</code> 和 <code>assets</code></li>
-                <li>在仓库 Settings → Pages 选择主分支发布</li>
-              </ol>
+              <p>浠撳簱锛?code>chloe19980401/wonly</code></p>
+              <p>鍩熷悕锛?code>wonlysocial.foreverdoodle.com</code></p>
             </section>
             <section class="panel connect-panel">
-              <div class="connect-icon">DNS</div>
-              <h3>自定义域名</h3>
-              <p>我已准备 <code>CNAME</code> 文件，你把里面的域名替换成自己的即可。</p>
-              <ol>
-                <li>在域名 DNS 添加 CNAME 到 GitHub Pages 地址</li>
-                <li>在 GitHub Pages 填入同一个域名</li>
-                <li>等待 HTTPS 证书自动签发</li>
-              </ol>
+              <div class="connect-icon">API</div>
+              <h3>骞冲彴鏁版嵁閲囬泦</h3>
+              <p>涓嬩竴闃舵鍙帴鍏?YouTube Data API銆丮eta Graph API銆乀ikTok Business API 鍜?LinkedIn API锛屾妸甯栧瓙閾炬帴杞垚鐪熷疄鎾斁銆佷簰鍔ㄥ拰杞矇鏁版嵁銆?/p>
             </section>
           </div>
         </section>
@@ -262,29 +219,19 @@
 
       <div class="modal" id="detailModal" hidden>
         <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
-          <button class="icon-button modal-close" id="closeDetailButton" aria-label="关闭详情">×</button>
+          <button class="icon-button modal-close" id="closeDetailButton" aria-label="鍏抽棴璇︽儏">脳</button>
           <div class="detail-head">
             <span class="status-pill" id="detailSeries"></span>
             <h2 id="detailTitle"></h2>
             <p id="detailSubtitle"></p>
           </div>
           <div class="detail-grid">
-            <section>
-              <h3>适配平台</h3>
-              <div class="platform-chips" id="detailPlatforms"></div>
-            </section>
-            <section>
-              <h3>参考素材</h3>
-              <ul class="detail-list" id="detailReferences"></ul>
-            </section>
-            <section class="detail-script">
-              <h3>脚本结构</h3>
-              <p id="detailScript"></p>
-            </section>
-            <section>
-              <h3>时间计划</h3>
-              <div class="detail-times" id="detailTimes"></div>
-            </section>
+            <section><h3>閫傞厤骞冲彴</h3><div class="platform-chips" id="detailPlatforms"></div></section>
+            <section><h3>OKR 褰掑洜</h3><div class="detail-times" id="detailOkr"></div></section>
+            <section><h3>鍙傝€冪礌鏉?/h3><ul class="detail-list" id="detailReferences"></ul></section>
+            <section><h3>甯栧瓙閾炬帴</h3><div class="detail-times" id="detailLinks"></div></section>
+            <section class="detail-script"><h3>鑴氭湰缁撴瀯</h3><p id="detailScript"></p></section>
+            <section><h3>鏃堕棿璁″垝</h3><div class="detail-times" id="detailTimes"></div></section>
           </div>
         </section>
       </div>
