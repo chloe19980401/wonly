@@ -48,6 +48,7 @@ const ROLE_PERMISSIONS = {
     views: ["design"],
     topicScope: "own",
     canCreateTopic: false,
+    canManageDesignTasks: true,
     canManageOkr: false,
     canManageSystem: false,
     canEditData: false,
@@ -614,6 +615,12 @@ function visibleDesignTasks() {
   return (data.designTasks || []).filter(canSeeDesignTask);
 }
 
+function canManageDesignTask(task = null) {
+  if (canManageSystem()) return true;
+  if (!currentPermissions().canManageDesignTasks) return false;
+  return !task || canSeeDesignTask(task);
+}
+
 function canEditTopic(item = null) {
   const scope = currentPermissions().topicScope;
   if (!currentPermissions().canCreateTopic) return false;
@@ -1110,13 +1117,13 @@ function renderDesignSchedule() {
         <strong>赵琳设计排期表</strong>
         <span>${rows.length} 个设计需求</span>
       </div>
-      ${canManageSystem() ? `<button class="primary-button" data-new-design-task="1">添加设计需求</button>` : ""}
+      ${canManageDesignTask() ? `<button class="primary-button" data-new-design-task="1">添加设计需求</button>` : ""}
     </div>
     <div class="design-schedule-table">
       <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>负责人</span><span>截止</span><span>状态</span><span>成品</span></div>
       ${rows.length ? rows.map((task) => {
-        const tag = canManageSystem() ? "button" : "div";
-        const editAttr = canManageSystem() ? ` data-edit-design-task="${task.id}"` : "";
+        const tag = canManageDesignTask(task) ? "button" : "div";
+        const editAttr = canManageDesignTask(task) ? ` data-edit-design-task="${task.id}"` : "";
         return `
         <${tag} class="design-row ${task.delayed ? "is-delayed" : ""}"${editAttr}>
           <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · ${task.designer}</small></span>
@@ -1317,18 +1324,18 @@ function openSeriesEditor(id = "") {
 }
 
 function openDesignTaskEditor(id = "") {
-  if (!canManageSystem()) {
+  const exists = (data.designTasks || []).find((task) => task.id === id);
+  if (!canManageDesignTask(exists)) {
     alert(roleLockedMessage());
     return;
   }
-  const exists = (data.designTasks || []).find((task) => task.id === id);
   const item = exists ?? {
     id: "",
     source: "manual",
     topicId: "",
     title: "",
     requester: currentAccount?.owner || FALLBACK_OWNER,
-    designer: DESIGNERS[0].name,
+    designer: currentAccount?.role === "designer" ? currentAccount.owner : DESIGNERS[0].name,
     contentType: "图文",
     platforms: [],
     dueDate: "",
@@ -1344,7 +1351,7 @@ function openDesignTaskEditor(id = "") {
     fields: [
       textField("title", "设计需求", item.title),
       selectField("designer", "设计师", item.designer || DESIGNERS[0].name, DESIGNERS.map((designer) => [designer.name, designer.name])),
-      selectField("requester", "需求负责人", item.requester || FALLBACK_OWNER, data.owners.map((owner) => [owner.name, owner.name])),
+      selectField("requester", "需求负责人", item.requester || currentAccount?.owner || FALLBACK_OWNER, ACCOUNT_PEOPLE.map((owner) => [owner.name, owner.name])),
       multiDropdownField("platforms", "发布平台", item.platforms || [], PUBLISH_PLATFORMS),
       selectField("contentType", "内容形式", item.contentType || "图文", CONTENT_TYPES.map((value) => [value, value])),
       textField("dueDate", "设计截止时间", item.dueDate || ""),
@@ -1364,6 +1371,8 @@ function openDesignTaskEditor(id = "") {
         ...values,
         id: item.id || `design-manual-${Date.now()}`,
         source: item.source || "manual",
+        requester: canManageSystem() ? values.requester : currentAccount?.owner || values.requester,
+        designer: canManageSystem() ? values.designer : currentAccount?.owner || values.designer,
         platforms: arrayValue(values.platforms).filter(Boolean),
         delayed: values.delayed === "true",
       };
