@@ -18,7 +18,7 @@ const ROLE_LABELS = {
 
 const ROLE_PERMISSIONS = {
   admin: {
-    views: ["overview", "calendar", "library", "okr", "analytics", "design", "settings"],
+    views: ["overview", "calendar", "library", "okr", "analytics", "design", "documents", "settings"],
     topicScope: "all",
     canCreateTopic: true,
     canManageOkr: true,
@@ -27,7 +27,7 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   manager: {
-    views: ["overview", "calendar", "library", "okr", "analytics", "design"],
+    views: ["overview", "calendar", "library", "okr", "analytics", "design", "documents"],
     topicScope: "all",
     canCreateTopic: true,
     canManageOkr: true,
@@ -36,7 +36,7 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   marketing: {
-    views: ["overview", "calendar", "library", "okr", "analytics", "design"],
+    views: ["overview", "calendar", "library", "okr", "analytics", "design", "documents"],
     topicScope: "own",
     canCreateTopic: true,
     canManageOkr: false,
@@ -45,7 +45,7 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   designer: {
-    views: ["design"],
+    views: ["design", "documents"],
     topicScope: "own",
     canCreateTopic: false,
     canManageDesignTasks: true,
@@ -55,7 +55,7 @@ const ROLE_PERMISSIONS = {
     canExport: false,
   },
   editor: {
-    views: ["calendar", "library"],
+    views: ["calendar", "library", "documents"],
     topicScope: "own",
     canCreateTopic: true,
     canManageOkr: false,
@@ -64,7 +64,7 @@ const ROLE_PERMISSIONS = {
     canExport: false,
   },
   viewer: {
-    views: ["overview", "calendar", "library"],
+    views: ["overview", "calendar", "library", "documents"],
     topicScope: "own",
     canCreateTopic: false,
     canManageOkr: false,
@@ -234,6 +234,7 @@ const defaultData = {
   ],
   topics: [],
   designTasks: [],
+  publicDocs: [],
   apiConnections: API_PLATFORMS.map(([id, name]) => ({ id, name, status: "未接入", accountId: "", credentialNote: "", syncMode: "手动同步", lastSync: "", owner: FALLBACK_OWNER, note: "" })),
   okrs: [],
 };
@@ -481,6 +482,10 @@ function normalizeData(next) {
     next.designTasks = [];
     changed = true;
   }
+  if (!Array.isArray(next.publicDocs)) {
+    next.publicDocs = [];
+    changed = true;
+  }
   if (!next.migrations.includes(SUPER_FACTORY_TOPIC_VERSION)) {
     const importSource = "super-factory-topic-import-v1";
     const importedTopicIds = new Set(next.topics.filter((item) => item.source === importSource).map((item) => item.id));
@@ -644,6 +649,14 @@ function canExport() {
   return Boolean(currentPermissions().canExport);
 }
 
+function canUploadPublicDocs() {
+  return canEditData() || currentPermissions().canManageDesignTasks || currentPermissions().canCreateTopic;
+}
+
+function canDeletePublicDoc(doc) {
+  return canManageSystem() || doc.uploader === currentAccount?.owner;
+}
+
 function roleLockedMessage() {
   return "当前账号没有这个操作权限。";
 }
@@ -757,6 +770,7 @@ function renderAll() {
   renderAnalytics();
   renderSystemEditor();
   renderDesignSchedule();
+  renderPublicDocs();
   renderApiConnections();
   applyRoleAccess();
 }
@@ -1139,6 +1153,42 @@ function renderDesignSchedule() {
   `;
 }
 
+function renderPublicDocs() {
+  const mount = $("#publicDocs");
+  if (!mount) return;
+  const rows = (data.publicDocs || []).slice().sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
+  mount.innerHTML = `
+    <div class="design-schedule-head">
+      <div>
+        <strong>公共文档库</strong>
+        <span>${rows.length} 个公共资料</span>
+      </div>
+      ${canUploadPublicDocs() ? `
+        <div class="doc-actions">
+          <button class="ghost-button" data-upload-public-doc="1">上传文件</button>
+          <button class="primary-button" data-new-public-doc="1">添加链接</button>
+        </div>
+      ` : ""}
+    </div>
+    <div class="doc-grid">
+      ${rows.length ? rows.map((doc) => `
+        <article class="doc-card">
+          <div>
+            <strong>${escapeHtml(doc.name || "未命名文档")}</strong>
+            <span>${escapeHtml(doc.category || "公共资料")} · ${formatFileSize(doc.size)} · ${escapeHtml(doc.uploader || "未知")}</span>
+          </div>
+          <p>${escapeHtml(doc.note || "暂无备注")}</p>
+          <small>${escapeHtml(doc.uploadedAt || "未记录时间")}</small>
+          <div class="doc-card-actions">
+            ${doc.url ? `<a class="ghost-button" href="${escapeAttr(doc.url)}" target="_blank" rel="noopener">打开</a>` : ""}
+            ${canDeletePublicDoc(doc) ? `<button class="ghost-button danger" data-delete-public-doc="${doc.id}">删除</button>` : ""}
+          </div>
+        </article>
+      `).join("") : `<div class="empty-state">还没有公共文档。可以上传小文件，或添加云盘/在线文档链接。</div>`}
+    </div>
+  `;
+}
+
 function renderApiConnections() {
   const mount = $("#apiConnections");
   if (!mount) return;
@@ -1382,6 +1432,65 @@ function openDesignTaskEditor(id = "") {
       saveAndRefresh();
     },
   });
+}
+
+function openPublicDocEditor() {
+  if (!canUploadPublicDocs()) {
+    alert(roleLockedMessage());
+    return;
+  }
+  openEditor({
+    scope: "公共文档",
+    title: "添加公共文档链接",
+    hint: "适合保存云盘文件夹、在线文档、翻译稿、脚本模板、设计规范和复盘资料链接。",
+    fields: [
+      textField("name", "文档名称", ""),
+      selectField("category", "资料类型", "云盘链接", ["云盘链接", "脚本模板", "翻译文件", "设计规范", "复盘资料", "其他"].map((value) => [value, value])),
+      textField("url", "文档/云盘链接", ""),
+      textareaField("note", "备注", ""),
+    ],
+    onSave(values) {
+      if (!values.name.trim() || !values.url.trim()) {
+        alert("请填写文档名称和链接。");
+        return false;
+      }
+      data.publicDocs.push({
+        id: `doc-${Date.now()}`,
+        name: values.name.trim(),
+        category: values.category,
+        url: values.url.trim(),
+        size: 0,
+        uploader: currentAccount?.owner || currentAccount?.username || "未知",
+        uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+        note: values.note.trim(),
+      });
+      saveAndRefresh();
+    },
+  });
+}
+
+function uploadPublicDocFile(file) {
+  if (!file || !canUploadPublicDocs()) return;
+  const maxInlineSize = 1.5 * 1024 * 1024;
+  if (file.size > maxInlineSize) {
+    alert("这个文件较大。当前静态站点更适合保存云盘链接，请先上传到云盘，再用“添加链接”登记。");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    data.publicDocs.push({
+      id: `doc-${Date.now()}`,
+      name: file.name,
+      category: "上传文件",
+      url: String(reader.result || ""),
+      size: file.size,
+      uploader: currentAccount?.owner || currentAccount?.username || "未知",
+      uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+      note: "浏览器本地保存的小文件",
+    });
+    saveAndRefresh();
+  };
+  reader.readAsDataURL(file);
 }
 
 function openApiConnectionEditor(id = "") {
@@ -1718,7 +1827,7 @@ function openDataImportEditor() {
 }
 
 function validateImportedData(next) {
-  ["owners", "accounts", "platformBundles", "series", "topics", "designTasks", "apiConnections", "okrs"].forEach((key) => {
+  ["owners", "accounts", "platformBundles", "series", "topics", "designTasks", "publicDocs", "apiConnections", "okrs"].forEach((key) => {
     if (!Array.isArray(next[key])) throw new Error(`缺少 ${key} 列表`);
   });
   if (!next.owners.length) throw new Error("至少需要一个成员");
@@ -1922,6 +2031,14 @@ function collectOkrObjectivesFromEditor() {
   }).filter((objective) => objective.title);
 }
 
+function formatFileSize(size = 0) {
+  const value = Number(size) || 0;
+  if (!value) return "链接";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
@@ -2010,12 +2127,21 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-design-task],[data-edit-api],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-design-task],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
+    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-design-task],[data-edit-api],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-design-task],[data-new-public-doc],[data-upload-public-doc],[data-delete-public-doc],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
     if (target.dataset.viewSeries) openSeriesTopics(target.dataset.viewSeries);
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
     if (target.dataset.editDesignTask) openDesignTaskEditor(target.dataset.editDesignTask);
+    if (target.dataset.newPublicDoc) openPublicDocEditor();
+    if (target.dataset.uploadPublicDoc) $("#publicDocFileInput")?.click();
+    if (target.dataset.deletePublicDoc) {
+      const item = (data.publicDocs || []).find((doc) => doc.id === target.dataset.deletePublicDoc);
+      if (item && canDeletePublicDoc(item) && confirm(`删除公共文档「${item.name}」？`)) {
+        data.publicDocs = (data.publicDocs || []).filter((doc) => doc.id !== item.id);
+        saveAndRefresh();
+      }
+    }
     if (target.dataset.editApi) openApiConnectionEditor(target.dataset.editApi);
     if (target.dataset.editBundle) openBundleEditor(target.dataset.editBundle);
     if (target.dataset.editOwner) openOwnerEditor(target.dataset.editOwner);
@@ -2041,6 +2167,11 @@ function bindEvents() {
       activeMonth = data.activeMonth;
       renderAll();
     }
+  });
+  $("#publicDocFileInput")?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    uploadPublicDocFile(file);
+    event.target.value = "";
   });
   document.addEventListener("keydown", (event) => {
     if ((event.key === "Enter" || event.key === " ") && event.target?.matches?.("[data-view-series]")) {

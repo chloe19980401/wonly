@@ -55,6 +55,7 @@
           <button class="nav-item" data-view="okr"><span class="icon">◎</span><span>OKR</span></button>
           <button class="nav-item" data-view="analytics"><span class="icon">↗</span><span>数据看板</span></button>
           <button class="nav-item" data-view="design"><span class="icon">✎</span><span>设计排期</span></button>
+          <button class="nav-item" data-view="documents"><span class="icon">▤</span><span>公共文档</span></button>
           <button class="nav-item" data-view="settings"><span class="icon">⚙</span><span>设置</span></button>
         </nav>
 
@@ -209,6 +210,20 @@
             <div class="panel-head"><h3>赵琳设计排期表</h3><span>设计需求、平台、截止时间、成品上传和延期标记</span></div>
             <div id="designSchedule"></div>
           </section>
+        </section>
+
+        <section class="view" id="documents">
+          <div class="section-heading">
+            <div>
+              <h2>公共文档</h2>
+              <p>集中保存团队共用的云盘链接、脚本模板、翻译文件、设计规范和复盘资料。</p>
+            </div>
+          </div>
+          <section class="panel system-edit-panel">
+            <div class="panel-head"><h3>团队资料库</h3><span>文件、链接、负责人、上传时间和备注</span></div>
+            <div id="publicDocs"></div>
+          </section>
+          <input id="publicDocFileInput" type="file" hidden />
         </section>
 
         <section class="view" id="settings">
