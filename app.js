@@ -815,6 +815,7 @@ function downloadSchedule() {
 function switchView(viewId) {
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
+  $("#homeBanner").hidden = viewId !== "overview";
 }
 
 function bindEvents() {
