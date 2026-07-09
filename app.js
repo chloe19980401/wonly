@@ -71,6 +71,13 @@ const FALLBACK_OWNER = REAL_OWNERS[0].name;
 const DESIGNERS = [{ name: "赵琳", title: "协助设计师" }];
 const CONTENT_TYPES = ["视频", "图文"];
 const PUBLISH_PLATFORMS = ["YouTube", "TikTok", "Instagram", "Facebook", "LinkedIn"];
+const SERIES_MONTH_OPTIONS = ["2026-07", "2026-08", "2026-09"];
+const API_PLATFORMS = [
+  ["youtube", "YouTube Data API"],
+  ["meta", "Meta Graph API"],
+  ["tiktok", "TikTok Business API"],
+  ["linkedin", "LinkedIn API"],
+];
 
 const defaultData = {
   activeMonth: "2026-07",
@@ -85,18 +92,20 @@ const defaultData = {
     { id: "data-thread", name: "观点传播包", platforms: ["LinkedIn Post", "Facebook Quote Card"], format: "数据点、对比图、金句卡", usage: "把测试结果和对比数据拆成连续观点，适合复盘和传播。" },
   ],
   series: [
-    { id: "s1", code: "S1", name: "只看王力门", position: "品牌实力展示", audience: "B2B + C端", main: "TikTok + LinkedIn", cycle: "每周 1 个主题，连续 12 周", conclusion: "用工厂实力和真实测试建立信任，适合沉淀长线品牌资产。", color: "#0f8f61", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
-    { id: "s2", code: "S2", name: "Gossip Girl", position: "场景化生活方式", audience: "C端女性", main: "TikTok + Instagram", cycle: "每周 1-2 个主题，连续 12 周", conclusion: "用生活化场景拉近距离，适合测试审美、情绪和人群偏好。", color: "#b64f78", bundles: ["shorts-core", "visual-social"] },
-    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", cycle: "每周 1 个主题，连续 12 周", conclusion: "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
-    { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", cycle: "每周 1 个主题，连续 12 周", conclusion: "用强冲突测试制造记忆点，适合快速判断产品卖点是否成立。", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
+    { id: "s1", code: "S1", name: "只看王力门", position: "品牌实力展示", audience: "B2B + C端", main: "TikTok + LinkedIn", months: ["2026-07"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用工厂实力和真实测试建立信任，适合沉淀长线品牌资产。", color: "#0f8f61", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
+    { id: "s2", code: "S2", name: "Gossip Girl", position: "场景化生活方式", audience: "C端女性", main: "TikTok + Instagram", months: ["2026-07", "2026-08"], cycle: "每周 1-2 个主题，连续 12 周", conclusion: "用生活化场景拉近距离，适合测试审美、情绪和人群偏好。", color: "#b64f78", bundles: ["shorts-core", "visual-social"] },
+    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", months: ["2026-08", "2026-09"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
+    { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", months: ["2026-09"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用强冲突测试制造记忆点，适合快速判断产品卖点是否成立。", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
   ],
   topics: [],
   designTasks: [],
+  apiConnections: API_PLATFORMS.map(([id, name]) => ({ id, name, status: "未接入", accountId: "", credentialNote: "", syncMode: "手动同步", lastSync: "", owner: FALLBACK_OWNER, note: "" })),
   okrs: [],
 };
 
 let data = loadData();
 let activeMonth = data.activeMonth;
+let activeSeriesMonth = "all";
 let activeSeries = "all";
 let currentAccount = null;
 
@@ -172,6 +181,7 @@ function normalizeData(next) {
       ...seriesItem,
       cycle: seriesItem.cycle || fallback?.cycle || "每周 1 个主题，连续 12 周",
       conclusion: seriesItem.conclusion || fallback?.conclusion || "等待复盘结论。",
+      months: Array.isArray(seriesItem.months) && seriesItem.months.length ? seriesItem.months : (fallback?.months || SERIES_MONTH_OPTIONS),
       bundles: Array.isArray(seriesItem.bundles) ? seriesItem.bundles : [],
     };
     if (JSON.stringify(normalized) !== JSON.stringify(seriesItem)) changed = true;
@@ -191,6 +201,17 @@ function normalizeData(next) {
   if (!Array.isArray(next.designTasks)) {
     next.designTasks = [];
     changed = true;
+  }
+  if (!Array.isArray(next.apiConnections)) {
+    next.apiConnections = clone(defaultData.apiConnections);
+    changed = true;
+  } else {
+    API_PLATFORMS.forEach(([id, name]) => {
+      if (!next.apiConnections.some((item) => item.id === id)) {
+        next.apiConnections.push({ id, name, status: "未接入", accountId: "", credentialNote: "", syncMode: "手动同步", lastSync: "", owner: FALLBACK_OWNER, note: "" });
+        changed = true;
+      }
+    });
   }
   next.topics.forEach((item) => {
     if (!Array.isArray(item.platforms)) {
@@ -300,6 +321,17 @@ function monthLabel(month) {
   return `${year}年${Number(value)}月`;
 }
 
+function shortMonthLabel(month) {
+  return `${Number(String(month).split("-")[1])}月`;
+}
+
+function parsePlatformList(value = "") {
+  return String(value)
+    .split(/[+,/，、]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -380,6 +412,7 @@ function updatePrimaryAction(viewId = $(".view.active")?.id) {
 
 function renderAll() {
   renderSummaryCounts();
+  renderSeriesMonthTabs();
   renderSeries();
   renderBundles();
   renderTasks();
@@ -392,6 +425,7 @@ function renderAll() {
   renderAnalytics();
   renderSystemEditor();
   renderDesignSchedule();
+  renderApiConnections();
   applyRoleAccess();
 }
 
@@ -400,9 +434,17 @@ function renderSummaryCounts() {
   $("#ownerCount").textContent = String(data.owners.length);
 }
 
+function renderSeriesMonthTabs() {
+  $$(".segmented button[data-month]").forEach((button) => {
+    const value = button.dataset.month === "all" ? "all" : `2026-0${button.dataset.month}`;
+    button.classList.toggle("active", value === activeSeriesMonth);
+  });
+}
+
 function renderSeries() {
-  $("#seriesGrid").innerHTML = data.series.map((item) => {
-    const topics = data.topics.filter((topicItem) => topicItem.seriesId === item.id && canSeeTopic(topicItem));
+  const rows = data.series.filter((item) => activeSeriesMonth === "all" || (item.months || []).includes(activeSeriesMonth));
+  $("#seriesGrid").innerHTML = rows.length ? rows.map((item) => {
+    const topics = data.topics.filter((topicItem) => topicItem.seriesId === item.id && canSeeTopic(topicItem) && (activeSeriesMonth === "all" || topicItem.month === activeSeriesMonth));
     const seriesBadge = canManageSystem()
       ? `<button class="series-badge" style="background:${item.color}" data-edit-series="${item.id}" title="编辑系列">${item.code}</button>`
       : `<span class="series-badge" style="background:${item.color}">${item.code}</span>`;
@@ -415,7 +457,7 @@ function renderSeries() {
         <h3>${item.name}</h3>
         <p>${item.position}，面向 ${item.audience}。</p>
         <div class="series-meta">
-          <span>${item.cycle || "未设置周期"}</span>
+          <span>${(item.months || []).map(shortMonthLabel).join(" / ")} · ${item.cycle || "未设置周期"}</span>
           <span>${item.conclusion || "未填写结论"}</span>
         </div>
         <div class="mini-stats">
@@ -425,7 +467,7 @@ function renderSeries() {
         </div>
       </article>
     `;
-  }).join("");
+  }).join("") : `<div class="empty-state">这个月份还没有配置系列。进入设置页编辑系列，勾选适用月份。</div>`;
 }
 
 function openSeriesTopics(seriesId) {
@@ -581,7 +623,7 @@ function okrObjectives(okr) {
 }
 
 function renderOkrMonths() {
-  const months = [...new Set(data.okrs.map((item) => item.month).concat(data.topics.map((item) => item.month)))].sort();
+  const months = [...new Set(SERIES_MONTH_OPTIONS.concat(data.okrs.map((item) => item.month), data.topics.map((item) => item.month)))].sort();
   if (!months.length) months.push(activeMonth || defaultData.activeMonth);
   if (!months.includes(activeMonth)) activeMonth = months[0];
   $("#okrMonthTabs").innerHTML = months.map((month) => `<button class="${month === activeMonth ? "active" : ""}" data-okr-month="${month}">${monthLabel(month)}</button>`).join("");
@@ -671,6 +713,18 @@ function renderAnalytics() {
       `;
     }).join("")}
   `;
+  $("#goNoGoRules").innerHTML = [
+    ["Go", "完播率 ≥ 45%，互动率 ≥ 6%", "继续加码同类主题，追加同系列选题和设计资源。", "负责人：运营主管"],
+    ["优化重测", "完播率 32%-44%，或互动率未达 6%", "调整 Hook、时长、字幕、封面或首屏信息，7 天内重发测试。", "负责人：主题负责人 + 设计师"],
+    ["No-Go", "低于基准 50%，或两轮重测仍未达标", "暂停同题材投入，沉淀失败原因，保留素材但不继续排期。", "负责人：运营负责人"],
+  ].map(([name, threshold, action, owner]) => `
+    <div class="rule-card">
+      <strong>${name}</strong>
+      <span>${threshold}</span>
+      <p>${action}</p>
+      <small>${owner}</small>
+    </div>
+  `).join("");
 }
 
 function average(values) {
@@ -751,6 +805,30 @@ function renderDesignSchedule() {
   `;
 }
 
+function renderApiConnections() {
+  const mount = $("#apiConnections");
+  if (!mount) return;
+  if (!canManageSystem()) {
+    mount.innerHTML = `<div class="empty-state">当前账号不能管理 API 接入。</div>`;
+    return;
+  }
+  const rows = data.apiConnections || [];
+  mount.innerHTML = `
+    <div class="api-grid">
+      ${rows.map((item) => `
+        <button class="api-card" data-edit-api="${item.id}">
+          <div>
+            <strong>${item.name}</strong>
+            <span class="status ${item.status === "已接入" ? "go" : item.status === "测试中" ? "progress" : ""}">${item.status}</span>
+          </div>
+          <p>${item.accountId || "未填写账号 / 主页 ID"}</p>
+          <small>${item.syncMode || "手动同步"} · ${item.lastSync || "未同步"} · ${item.owner || "未分配负责人"}</small>
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderSystemEditor() {
   if (!canManageSystem()) {
     $("#systemEditor").innerHTML = `<div class="empty-state">当前账号不能管理系统设置和团队账号。</div>`;
@@ -805,7 +883,7 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
       textField("subtitle", "主题说明", item.subtitle),
       selectField("seriesId", "所属系列", item.seriesId, data.series.map((seriesItem) => [seriesItem.id, seriesItem.name])),
       selectField("owner", "负责人", item.owner, ownerOptions),
-      checkboxGroupField("platforms", "发布平台", topicPlatforms(item), PUBLISH_PLATFORMS),
+      multiDropdownField("platforms", "发布平台", topicPlatforms(item), PUBLISH_PLATFORMS),
       selectField("contentType", "内容形式", item.contentType || "视频", CONTENT_TYPES.map((value) => [value, value])),
       selectField("designer", "协助设计师", item.designer || "", [["", "不需要设计协助"], ...DESIGNERS.map((designer) => [designer.name, designer.name])]),
       monthField("month", "OKR 月份", item.month || activeMonth),
@@ -863,25 +941,38 @@ function openSeriesEditor(id = "") {
       textField("name", "系列名称", item.name),
       textField("position", "定位", item.position),
       textField("audience", "受众", item.audience),
-      textField("main", "主要平台", item.main),
+      multiDropdownField("months", "适用月份", item.months || SERIES_MONTH_OPTIONS, SERIES_MONTH_OPTIONS.map((month) => [month, shortMonthLabel(month)])),
+      multiDropdownField("mainPlatforms", "主要平台", parsePlatformList(item.main), PUBLISH_PLATFORMS),
       textField("cycle", "周期", item.cycle),
       textField("color", "颜色", item.color),
       textField("bundles", "平台组合 ID，用逗号分隔", item.bundles.join(",")),
       textareaField("conclusion", "结论", item.conclusion || ""),
     ],
     deleteLabel: item.id ? "删除系列和关联主题" : "",
+    deleteConfirm: item.id ? `确定删除「${item.name}」系列？该系列下的主题和关联设计排期也会一起删除。` : "",
     onDelete: item.id ? () => {
       if (data.series.length <= 1) {
         alert("至少保留一个系列。");
-        return;
+        return false;
       }
+      const removedTopicIds = data.topics.filter((topicItem) => topicItem.seriesId === item.id).map((topicItem) => topicItem.id);
       data.series = data.series.filter((seriesItem) => seriesItem.id !== item.id);
       data.topics = data.topics.filter((topicItem) => topicItem.seriesId !== item.id);
+      data.designTasks = (data.designTasks || []).filter((task) => !removedTopicIds.includes(task.topicId));
       if (activeSeries === item.id) activeSeries = "all";
       saveAndRefresh();
     } : null,
     onSave(values) {
-      const next = { ...item, ...values, id: values.id || idFrom(values.name), bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean) };
+      const next = {
+        ...item,
+        ...values,
+        id: values.id || idFrom(values.name),
+        months: arrayValue(values.months).filter(Boolean),
+        main: arrayValue(values.mainPlatforms).filter(Boolean).join(" + "),
+        bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean),
+      };
+      delete next.mainPlatforms;
+      if (!next.months.length) next.months = SERIES_MONTH_OPTIONS;
       const index = data.series.findIndex((seriesItem) => seriesItem.id === item.id);
       if (index >= 0) {
         const oldId = data.series[index].id;
@@ -926,7 +1017,7 @@ function openDesignTaskEditor(id = "") {
       textField("title", "设计需求", item.title),
       selectField("designer", "设计师", item.designer || DESIGNERS[0].name, DESIGNERS.map((designer) => [designer.name, designer.name])),
       selectField("requester", "需求负责人", item.requester || FALLBACK_OWNER, data.owners.map((owner) => [owner.name, owner.name])),
-      checkboxGroupField("platforms", "发布平台", item.platforms || [], PUBLISH_PLATFORMS),
+      multiDropdownField("platforms", "发布平台", item.platforms || [], PUBLISH_PLATFORMS),
       selectField("contentType", "内容形式", item.contentType || "图文", CONTENT_TYPES.map((value) => [value, value])),
       textField("dueDate", "设计截止时间", item.dueDate || ""),
       selectField("status", "设计状态", item.status || "待设计", ["待设计", "设计中", "待确认", "已完成"].map((value) => [value, value])),
@@ -951,6 +1042,33 @@ function openDesignTaskEditor(id = "") {
       const index = (data.designTasks || []).findIndex((task) => task.id === item.id);
       if (index >= 0) data.designTasks[index] = next;
       else data.designTasks.push(next);
+      saveAndRefresh();
+    },
+  });
+}
+
+function openApiConnectionEditor(id = "") {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
+  const item = (data.apiConnections || []).find((connection) => connection.id === id);
+  if (!item) return;
+  openEditor({
+    scope: "平台 API",
+    title: `配置：${item.name}`,
+    hint: "这里先保存接入信息和同步责任人。真正的密钥建议放在后端环境变量，不要直接公开写进前端页面。",
+    fields: [
+      selectField("status", "接入状态", item.status || "未接入", ["未接入", "申请中", "测试中", "已接入", "暂停"].map((value) => [value, value])),
+      selectField("owner", "负责人", item.owner || FALLBACK_OWNER, data.owners.map((owner) => [owner.name, owner.name])),
+      textField("accountId", "账号 / 主页 / App ID", item.accountId || ""),
+      selectField("syncMode", "同步方式", item.syncMode || "手动同步", ["手动同步", "每日自动同步", "每周自动同步", "仅保存配置"].map((value) => [value, value])),
+      textField("lastSync", "最近同步时间", item.lastSync || ""),
+      textareaField("credentialNote", "凭证保存位置", item.credentialNote || ""),
+      textareaField("note", "接入备注", item.note || ""),
+    ],
+    onSave(values) {
+      Object.assign(item, values);
       saveAndRefresh();
     },
   });
@@ -1263,7 +1381,7 @@ function openDataImportEditor() {
 }
 
 function validateImportedData(next) {
-  ["owners", "accounts", "platformBundles", "series", "topics", "designTasks", "okrs"].forEach((key) => {
+  ["owners", "accounts", "platformBundles", "series", "topics", "designTasks", "apiConnections", "okrs"].forEach((key) => {
     if (!Array.isArray(next[key])) throw new Error(`缺少 ${key} 列表`);
   });
   if (!next.owners.length) throw new Error("至少需要一个成员");
@@ -1294,9 +1412,9 @@ function openEditor(config) {
   };
   if (config.onDelete) {
     $("#deleteEditButton").onclick = () => {
-      if (!confirm("确定删除？删除后当前浏览器里的这项数据会被移除。")) return;
-      config.onDelete();
-      closeEditor();
+      if (!confirm(config.deleteConfirm || "确定删除？删除后当前浏览器里的这项数据会被移除。")) return;
+      const shouldClose = config.onDelete();
+      if (shouldClose !== false) closeEditor();
     };
   }
   $("#cancelEditButton").onclick = closeEditor;
@@ -1344,6 +1462,32 @@ function textareaField(name, label, value = "") {
 
 function selectField(name, label, value, options) {
   return `<label><span>${label}</span><select name="${name}">${options.map(([optionValue, optionLabel]) => `<option value="${escapeAttr(optionValue)}" ${optionValue === value ? "selected" : ""}>${optionLabel}</option>`).join("")}</select></label>`;
+}
+
+function optionPair(option) {
+  return Array.isArray(option) ? option : [option, option];
+}
+
+function multiDropdownField(name, label, selectedValues = [], options = []) {
+  const selected = new Set(arrayValue(selectedValues));
+  const pairs = options.map(optionPair);
+  const selectedLabels = pairs.filter(([value]) => selected.has(value)).map(([, optionLabel]) => optionLabel);
+  return `
+    <fieldset class="wide multi-select">
+      <legend>${label}</legend>
+      <details>
+        <summary>${selectedLabels.length ? selectedLabels.join(" / ") : "请选择"}</summary>
+        <div class="multi-select-menu">
+          ${pairs.map(([optionValue, optionLabel]) => `
+            <label>
+              <input type="checkbox" name="${name}" value="${escapeAttr(optionValue)}" ${selected.has(optionValue) ? "checked" : ""} />
+              <span>${optionLabel}</span>
+            </label>
+          `).join("")}
+        </div>
+      </details>
+    </fieldset>
+  `;
 }
 
 function checkboxGroupField(name, label, selectedValues = [], options = []) {
@@ -1500,8 +1644,9 @@ function bindEvents() {
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $$(".segmented button[data-month]").forEach((button) => {
     button.addEventListener("click", () => {
-      activeMonth = button.dataset.month === "all" ? activeMonth : `2026-0${button.dataset.month}`;
-      renderAll();
+      activeSeriesMonth = button.dataset.month === "all" ? "all" : `2026-0${button.dataset.month}`;
+      renderSeriesMonthTabs();
+      renderSeries();
     });
   });
   $("#seriesFilter").addEventListener("change", (event) => {
@@ -1521,12 +1666,13 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-design-task],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-design-task],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
+    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-design-task],[data-edit-api],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-design-task],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
     if (target.dataset.viewSeries) openSeriesTopics(target.dataset.viewSeries);
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
     if (target.dataset.editDesignTask) openDesignTaskEditor(target.dataset.editDesignTask);
+    if (target.dataset.editApi) openApiConnectionEditor(target.dataset.editApi);
     if (target.dataset.editBundle) openBundleEditor(target.dataset.editBundle);
     if (target.dataset.editOwner) openOwnerEditor(target.dataset.editOwner);
     if (target.dataset.editAccount) openAccountEditor(target.dataset.editAccount);

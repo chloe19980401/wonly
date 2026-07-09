@@ -11,7 +11,7 @@
     <meta property="og:image" content="assets/wonly-security-studio.png" />
     <title>Wonly 社媒管理系统</title>
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=20260709-design-schedule" />
+    <link rel="stylesheet" href="styles.css?v=20260709-api-rules" />
   </head>
   <body>
     <section class="login-screen" id="loginScreen" aria-label="登录">
@@ -192,11 +192,7 @@
           </section>
           <section class="panel">
             <div class="panel-head"><h3>Go/No-Go 规则</h3><span>发布后 2 周评估</span></div>
-            <div class="rules">
-              <div><strong>Go</strong><span>完播率和互动率达到基准，继续加码同类主题。</span></div>
-              <div><strong>优化重测</strong><span>调整 Hook、时长、字幕或封面后重发。</span></div>
-              <div><strong>No-Go</strong><span>低于基准 50%，暂停同题材投入。</span></div>
-            </div>
+            <div class="rules" id="goNoGoRules"></div>
           </section>
         </section>
 
@@ -220,6 +216,10 @@
               <p>下一阶段可接入 YouTube Data API、Meta Graph API、TikTok Business API 和 LinkedIn API，把帖子链接转成真实播放、互动和转粉数据。</p>
             </section>
           </div>
+          <section class="panel system-edit-panel">
+            <div class="panel-head"><h3>平台 API 接入</h3><span>配置平台账号、凭证保存位置、同步方式和负责人</span></div>
+            <div id="apiConnections"></div>
+          </section>
           <section class="panel system-edit-panel">
             <div class="panel-head"><h3>系统内容编辑</h3><span>系列、平台组合、成员和月度 OKR 都可以在这里修改</span></div>
             <div id="systemEditor"></div>
@@ -263,6 +263,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260709-design-schedule"></script>
+    <script src="app.js?v=20260709-api-rules"></script>
   </body>
 </html>
