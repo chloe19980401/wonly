@@ -551,11 +551,19 @@ function openBundleEditor(id = "") {
 
 function openOwnerEditor(name) {
   const item = getOwner(name) ?? { name: "", title: "" };
+  const account = data.accounts.find((accountItem) => accountItem.owner === item.name) ?? { id: "", username: "", owner: item.name, role: "editor", passwordHash: "", status: "启用" };
   openEditor({
     scope: "成员配置",
     title: item.name ? `编辑成员：${item.name}` : "新增成员",
-    hint: "成员用于分配帖子负责人和月度 OKR 绩效看板。",
-    fields: [textField("name", "成员姓名", item.name), textField("title", "岗位/备注", item.title)],
+    hint: "新增成员时同步设置登录账号、初始密码和权限角色；编辑时密码留空则保持不变。",
+    fields: [
+      textField("name", "成员姓名", item.name),
+      textField("title", "岗位/备注", item.title),
+      textField("username", "登录账号", account.username),
+      passwordField("password", item.name && account.passwordHash ? "新密码（留空不修改）" : "初始密码", ""),
+      selectField("role", "权限角色", account.role, Object.entries(ROLE_LABELS)),
+      selectField("status", "账号状态", account.status, ["启用", "停用"].map((value) => [value, value])),
+    ],
     deleteLabel: item.name ? "删除成员" : "",
     onDelete: item.name ? () => {
       if (data.owners.length <= 1) {
@@ -568,21 +576,56 @@ function openOwnerEditor(name) {
         if (topicItem.owner === item.name) topicItem.owner = fallback;
       });
       data.okrs = data.okrs.filter((okr) => okr.owner !== item.name);
+      data.accounts = data.accounts.filter((accountItem) => accountItem.owner !== item.name);
       saveAndRefresh();
     } : null,
-    onSave(values) {
+    async onSave(values) {
+      if (!values.name.trim()) {
+        alert("请填写成员姓名。");
+        return false;
+      }
+      if (!values.username.trim()) {
+        alert("请填写登录账号。");
+        return false;
+      }
+      if (!account.passwordHash && !values.password) {
+        alert("请设置初始密码。");
+        return false;
+      }
+      const duplicate = data.accounts.some((accountItem) => accountItem.username === values.username.trim() && accountItem.id !== account.id);
+      if (duplicate) {
+        alert("这个登录账号已经存在。");
+        return false;
+      }
+      const ownerValues = { name: values.name.trim(), title: values.title.trim() };
       if (!item.name) {
-        data.owners.push(values);
+        data.owners.push(ownerValues);
       } else {
         const oldName = item.name;
-        Object.assign(item, values);
+        Object.assign(item, ownerValues);
         data.topics.forEach((topicItem) => {
-          if (topicItem.owner === oldName) topicItem.owner = values.name;
+          if (topicItem.owner === oldName) topicItem.owner = ownerValues.name;
         });
         data.okrs.forEach((okr) => {
-          if (okr.owner === oldName) okr.owner = values.name;
+          if (okr.owner === oldName) okr.owner = ownerValues.name;
+        });
+        data.accounts.forEach((accountItem) => {
+          if (accountItem.owner === oldName) accountItem.owner = ownerValues.name;
         });
       }
+      const nextAccount = {
+        ...account,
+        id: account.id || idFrom(`acct-${values.username}-${Date.now()}`),
+        username: values.username.trim(),
+        owner: ownerValues.name,
+        role: values.role,
+        status: values.status,
+        passwordHash: values.password ? await sha256(values.password) : account.passwordHash,
+      };
+      const accountIndex = data.accounts.findIndex((accountItem) => accountItem.id === account.id);
+      if (accountIndex >= 0) data.accounts[accountIndex] = nextAccount;
+      else data.accounts.push(nextAccount);
+      if (currentAccount?.id === nextAccount.id) currentAccount = nextAccount;
       saveAndRefresh();
     },
   });
