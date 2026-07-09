@@ -2,6 +2,7 @@ const ADMIN_USERNAME = "chloelee";
 const ADMIN_PASSWORD_HASH = "df3dcfc0245fb6d3f508523001b0979446249420e3dc4b0081785035fc90a998";
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
+const TEAM_OKR_VERSION = "2026-07-team-okr-v1";
 
 const ROLE_LABELS = {
   admin: "管理员",
@@ -78,6 +79,56 @@ const API_PLATFORMS = [
   ["tiktok", "TikTok Business API"],
   ["linkedin", "LinkedIn API"],
 ];
+const JULY_TEAM_OKRS = [
+  {
+    id: "2026-07-徐一诺-图文okr",
+    month: "2026-07",
+    owner: "徐一诺",
+    objective: "建立 7 月图文内容稳定产出节奏，用工厂证据和客户痛点降低海外客户理解成本。",
+    objectives: [{
+      id: "o-1",
+      title: "建立 7 月图文内容稳定产出节奏，用工厂证据和客户痛点降低海外客户理解成本。",
+      keyResults: [
+        { name: "7 月累计完成 20 条图文帖子，按照每周 5 条的频率发布。" },
+        { name: "每条图文都写清楚客户痛点、画面内容、核心卖点和 CTA。" },
+        { name: "所有图文设计需求都绑定协助设计师赵琳，并提前进入赵琳设计排期表。" },
+        { name: "每周五完成下周 5 条图文方案，明确每条图文放什么内容、用什么视觉和解决什么痛点。" },
+      ],
+    }],
+  },
+  {
+    id: "2026-07-周雨晴-印尼视频okr",
+    month: "2026-07",
+    owner: "周雨晴",
+    objective: "完成印尼市场视频内容验证，用家庭安全、暖色本地化和电商信任点建立询盘基础。",
+    objectives: [{
+      id: "o-1",
+      title: "完成印尼市场视频内容验证，用家庭安全、暖色本地化和电商信任点建立询盘基础。",
+      keyResults: [
+        { name: "7 月累计完成 12 条印尼视频帖子，按照每周 3 条的频率发布。" },
+        { name: "每条视频都包含印尼客户痛点、拍摄画面、脚本重点和平台发布方向。" },
+        { name: "不安排协助设计师，视频素材、字幕和发布物料由负责人自行整理。" },
+        { name: "每周五完成下周 3 条印尼视频拍摄方案，明确怎么拍、拍哪些工厂证据和解决什么顾虑。" },
+      ],
+    }],
+  },
+  {
+    id: "2026-07-周宗莉-越南视频okr",
+    month: "2026-07",
+    owner: "周宗莉",
+    objective: "完成越南市场视频内容验证，用 Tet 审美、Facebook/TikTok 场景和工厂可靠性建立品牌直达感。",
+    objectives: [{
+      id: "o-1",
+      title: "完成越南市场视频内容验证，用 Tet 审美、Facebook/TikTok 场景和工厂可靠性建立品牌直达感。",
+      keyResults: [
+        { name: "7 月累计完成 12 条越南视频帖子，按照每周 3 条的频率发布。" },
+        { name: "每条视频都包含越南客户痛点、拍摄画面、脚本重点和平台发布方向。" },
+        { name: "不安排协助设计师，视频素材、字幕和发布物料由负责人自行整理。" },
+        { name: "每周五完成下周 3 条越南视频拍摄方案，明确怎么拍、拍哪些工厂证据和解决什么顾虑。" },
+      ],
+    }],
+  },
+].map((okr) => ({ ...okr, keyResults: okr.objectives.flatMap((objective) => objective.keyResults) }));
 
 const defaultData = {
   activeMonth: "2026-07",
@@ -197,6 +248,17 @@ function normalizeData(next) {
       }
     });
   });
+  if (!Array.isArray(next.migrations)) next.migrations = [];
+  if (!next.migrations.includes(TEAM_OKR_VERSION)) {
+    JULY_TEAM_OKRS.forEach((okr) => {
+      const index = next.okrs.findIndex((item) => item.id === okr.id || (item.month === okr.month && item.owner === okr.owner));
+      if (index >= 0) next.okrs[index] = clone(okr);
+      else next.okrs.push(clone(okr));
+    });
+    next.activeMonth = "2026-07";
+    next.migrations.push(TEAM_OKR_VERSION);
+    changed = true;
+  }
 
   if (!Array.isArray(next.designTasks)) {
     next.designTasks = [];
@@ -332,7 +394,7 @@ function shortMonthLabel(month) {
 function parsePlatformList(value = "") {
   return String(value)
     .split(/[+,/，、]/)
-    .map((item) => item.trim())
+    .map((item) => item.replace(/\++$/g, "").trim())
     .filter(Boolean);
 }
 
@@ -449,6 +511,7 @@ function renderSeries() {
   const rows = data.series.filter((item) => activeSeriesMonth === "all" || (item.months || []).includes(activeSeriesMonth));
   $("#seriesGrid").innerHTML = rows.length ? rows.map((item) => {
     const topics = data.topics.filter((topicItem) => topicItem.seriesId === item.id && canSeeTopic(topicItem) && (activeSeriesMonth === "all" || topicItem.month === activeSeriesMonth));
+    const mainPlatforms = parsePlatformList(item.main);
     const seriesBadge = canManageSystem()
       ? `<button class="series-badge" style="background:${item.color}" data-edit-series="${item.id}" title="编辑系列">${item.code}</button>`
       : `<span class="series-badge" style="background:${item.color}">${item.code}</span>`;
@@ -456,7 +519,7 @@ function renderSeries() {
       <article class="series-card series-button" data-view-series="${item.id}" tabindex="0" role="button" aria-label="查看${escapeAttr(item.name)}主题列表">
         <div class="series-top">
           ${seriesBadge}
-          <span class="tag">${item.main}</span>
+          <div class="series-platforms">${mainPlatforms.length ? mainPlatforms.map((platform) => `<span>${platform}</span>`).join("") : "<span>未选平台</span>"}</div>
         </div>
         <h3>${item.name}</h3>
         <p>${item.position}，面向 ${item.audience}。</p>
@@ -607,8 +670,7 @@ function renderContentTable(keyword = "") {
 function okrScore(okr) {
   const keyResults = okrObjectives(okr).flatMap((objective) => objective.keyResults);
   if (!keyResults.length) return 0;
-  const total = keyResults.reduce((sum, kr) => sum + Math.min(Number(kr.actual || 0) / Math.max(Number(kr.target || 1), 1), 1), 0);
-  return Math.round((total / keyResults.length) * 100);
+  return Math.round((keyResults.filter((kr) => kr.name).length / keyResults.length) * 100);
 }
 
 function okrObjectives(okr) {
@@ -655,7 +717,7 @@ function renderOkr() {
             <div class="okr-objective-summary">
               <p><b>O${objectiveIndex + 1}：</b>${objective.title || "未填写 Objective"}</p>
               <div class="kr-list">
-                ${objective.keyResults.map((kr) => `<div><span>${kr.name}</span><strong>${kr.actual}/${kr.target}${kr.unit}</strong></div>`).join("")}
+                ${objective.keyResults.map((kr) => `<div><span>${kr.name}</span></div>`).join("")}
               </div>
             </div>
           `).join("")}
@@ -1300,7 +1362,7 @@ function openOkrEditor(id) {
     onMount() {
       const builder = $("#okrBuilder");
       $("#addObjectiveButton").onclick = () => {
-        builder.insertAdjacentHTML("beforeend", okrObjectiveBlock({ title: "", keyResults: [{ name: "", target: 0, actual: 0, unit: "" }] }, builder.children.length));
+        builder.insertAdjacentHTML("beforeend", okrObjectiveBlock({ title: "", keyResults: [{ name: "" }] }, builder.children.length));
         reindexOkrEditor();
       };
       builder.onclick = (event) => {
@@ -1308,7 +1370,7 @@ function openOkrEditor(id) {
         if (addKrButton) {
           const block = addKrButton.closest(".okr-objective-block");
           const list = block.querySelector(".okr-kr-list");
-          list.insertAdjacentHTML("beforeend", okrKeyResultRow({ name: "", target: 0, actual: 0, unit: "" }, list.children.length));
+          list.insertAdjacentHTML("beforeend", okrKeyResultRow({ name: "" }, list.children.length));
           reindexOkrEditor();
           return;
         }
@@ -1523,7 +1585,7 @@ function checkboxGroupField(name, label, selectedValues = [], options = []) {
 function okrStructureField(item) {
   const objectives = okrObjectives(item).map((objective) => ({
     title: objective.title,
-    keyResults: objective.keyResults.length ? objective.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }],
+    keyResults: objective.keyResults.length ? objective.keyResults : [{ name: "" }],
   }));
   return `
     <section class="okr-builder wide">
@@ -1539,7 +1601,7 @@ function okrStructureField(item) {
 }
 
 function okrObjectiveBlock(objective, index) {
-  const keyResults = objective.keyResults?.length ? objective.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }];
+  const keyResults = objective.keyResults?.length ? objective.keyResults : [{ name: "" }];
   return `
     <div class="okr-objective-block">
       <div class="okr-objective-card">
@@ -1565,10 +1627,7 @@ function okrKeyResultRow(kr, index) {
   return `
     <div class="okr-kr-row">
       <span class="okr-index" data-kr-index>KR${index + 1}</span>
-      <input name="krName" value="${escapeAttr(kr.name || "")}" placeholder="添加 Key Result" />
-      <input type="number" step="0.1" min="0" name="krTarget" value="${escapeAttr(kr.target ?? 0)}" placeholder="目标" />
-      <input type="number" step="0.1" min="0" name="krActual" value="${escapeAttr(kr.actual ?? 0)}" placeholder="实际" />
-      <input name="krUnit" value="${escapeAttr(kr.unit || "")}" placeholder="单位" />
+      <input name="krName" value="${escapeAttr(kr.name || "")}" placeholder="填写一个可量化指标，例如：发布 20 条短视频" />
       <button class="icon-button" type="button" data-remove-kr title="删除 KR" aria-label="删除 KR">×</button>
     </div>
   `;
@@ -1588,9 +1647,6 @@ function collectOkrObjectivesFromEditor() {
     const title = block.querySelector('[name="objectiveTitle"]').value.trim();
     const keyResults = Array.from(block.querySelectorAll(".okr-kr-row")).map((row) => ({
       name: row.querySelector('[name="krName"]').value.trim(),
-      target: Number(row.querySelector('[name="krTarget"]').value || 0),
-      actual: Number(row.querySelector('[name="krActual"]').value || 0),
-      unit: row.querySelector('[name="krUnit"]').value.trim(),
     })).filter((kr) => kr.name);
     return { id: `o-${objectiveIndex + 1}`, title, keyResults };
   }).filter((objective) => objective.title);
