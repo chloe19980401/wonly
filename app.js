@@ -11,6 +11,54 @@ const ROLE_LABELS = {
   viewer: "只读成员",
 };
 
+const ROLE_PERMISSIONS = {
+  admin: {
+    views: ["overview", "calendar", "library", "okr", "analytics", "settings"],
+    topicScope: "all",
+    canCreateTopic: true,
+    canManageOkr: true,
+    canManageSystem: true,
+    canEditData: true,
+    canExport: true,
+  },
+  manager: {
+    views: ["overview", "calendar", "library", "okr", "analytics"],
+    topicScope: "all",
+    canCreateTopic: true,
+    canManageOkr: true,
+    canManageSystem: false,
+    canEditData: true,
+    canExport: true,
+  },
+  marketing: {
+    views: ["overview", "calendar", "library", "analytics"],
+    topicScope: "all",
+    canCreateTopic: true,
+    canManageOkr: false,
+    canManageSystem: false,
+    canEditData: true,
+    canExport: true,
+  },
+  editor: {
+    views: ["calendar", "library"],
+    topicScope: "own",
+    canCreateTopic: true,
+    canManageOkr: false,
+    canManageSystem: false,
+    canEditData: false,
+    canExport: false,
+  },
+  viewer: {
+    views: ["overview", "calendar", "library"],
+    topicScope: "own",
+    canCreateTopic: false,
+    canManageOkr: false,
+    canManageSystem: false,
+    canEditData: false,
+    canExport: false,
+  },
+};
+
 const defaultData = {
   activeMonth: "2026-07",
   owners: [
@@ -95,6 +143,59 @@ function getAccount(id) {
   return data.accounts.find((item) => item.id === id);
 }
 
+function currentPermissions() {
+  return ROLE_PERMISSIONS[currentAccount?.role] ?? ROLE_PERMISSIONS.viewer;
+}
+
+function isAdmin() {
+  return currentAccount?.role === "admin";
+}
+
+function canAccessView(viewId) {
+  return currentPermissions().views.includes(viewId);
+}
+
+function firstAllowedView() {
+  return currentPermissions().views[0] ?? "overview";
+}
+
+function canSeeTopic(item) {
+  const scope = currentPermissions().topicScope;
+  return scope === "all" || !currentAccount?.owner || item.owner === currentAccount.owner;
+}
+
+function canSeeOwner(ownerName) {
+  const scope = currentPermissions().topicScope;
+  return scope === "all" || !currentAccount?.owner || ownerName === currentAccount.owner;
+}
+
+function canEditTopic(item = null) {
+  const scope = currentPermissions().topicScope;
+  if (!currentPermissions().canCreateTopic) return false;
+  if (!item || scope === "all") return true;
+  return item.owner === currentAccount?.owner;
+}
+
+function canManageOkr() {
+  return Boolean(currentPermissions().canManageOkr);
+}
+
+function canManageSystem() {
+  return Boolean(currentPermissions().canManageSystem);
+}
+
+function canEditData() {
+  return Boolean(currentPermissions().canEditData);
+}
+
+function canExport() {
+  return Boolean(currentPermissions().canExport);
+}
+
+function roleLockedMessage() {
+  return "当前账号没有这个操作权限。";
+}
+
 function topicPlatforms(item) {
   return item.bundles.flatMap((id) => getBundle(id)?.platforms ?? []);
 }
@@ -114,6 +215,7 @@ function showApp() {
   $("#loginScreen").hidden = true;
   $("#appShell").hidden = false;
   renderCurrentAccount();
+  applyRoleAccess();
 }
 
 function showLogin() {
@@ -150,6 +252,19 @@ function renderCurrentAccount() {
   $("#currentAccountPill").textContent = `${ROLE_LABELS[account.role] ?? account.role} · ${account.username}`;
 }
 
+function applyRoleAccess() {
+  const allowedViews = currentPermissions().views;
+  $$(".nav-item").forEach((button) => {
+    button.hidden = !allowedViews.includes(button.dataset.view);
+  });
+  $("#newTopicButton").hidden = !currentPermissions().canCreateTopic;
+  $("#exportButton").hidden = !canExport();
+  $("#simulateButton").hidden = !canEditData();
+  const activeView = $(".view.active")?.id;
+  if (!activeView || !canAccessView(activeView)) switchView(firstAllowedView());
+  else $("#homeBanner").hidden = activeView !== "overview";
+}
+
 function renderAll() {
   renderSummaryCounts();
   renderSeries();
@@ -163,6 +278,7 @@ function renderAll() {
   renderOkr();
   renderAnalytics();
   renderSystemEditor();
+  applyRoleAccess();
 }
 
 function renderSummaryCounts() {
@@ -172,11 +288,14 @@ function renderSummaryCounts() {
 
 function renderSeries() {
   $("#seriesGrid").innerHTML = data.series.map((item) => {
-    const topics = data.topics.filter((topicItem) => topicItem.seriesId === item.id);
+    const topics = data.topics.filter((topicItem) => topicItem.seriesId === item.id && canSeeTopic(topicItem));
+    const seriesBadge = canManageSystem()
+      ? `<button class="series-badge" style="background:${item.color}" data-edit-series="${item.id}" title="编辑系列">${item.code}</button>`
+      : `<span class="series-badge" style="background:${item.color}">${item.code}</span>`;
     return `
       <article class="series-card">
         <div class="series-top">
-          <button class="series-badge" style="background:${item.color}" data-edit-series="${item.id}" title="编辑系列">${item.code}</button>
+          ${seriesBadge}
           <span class="tag">${item.main}</span>
         </div>
         <h3>${item.name}</h3>
@@ -200,7 +319,7 @@ function renderBundles() {
       </div>
       <div class="platform-chips">${bundle.platforms.map((platform) => `<span class="chip">${platform}</span>`).join("")}</div>
       <span class="bundle-format">${bundle.format}</span>
-      <button class="ghost-button table-action" data-edit-bundle="${bundle.id}">编辑组合</button>
+      ${canManageSystem() ? `<button class="ghost-button table-action" data-edit-bundle="${bundle.id}">编辑组合</button>` : ""}
     </article>
   `).join("");
 }
@@ -225,7 +344,7 @@ function renderPlatforms() {
     <div class="platform-item">
       <span class="checkbox">${bundle.name.slice(0, 1)}</span>
       <div><strong>${bundle.name}</strong><span>${bundle.format}</span></div>
-      <button class="ghost-button table-action" data-edit-bundle="${bundle.id}">编辑</button>
+      ${canManageSystem() ? `<button class="ghost-button table-action" data-edit-bundle="${bundle.id}">编辑</button>` : ""}
     </div>
   `).join("");
 }
@@ -238,7 +357,7 @@ function renderFilters() {
 
 function renderCalendar() {
   const rows = data.topics
-    .filter((item) => (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth)
+    .filter((item) => canSeeTopic(item) && (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth)
     .sort((a, b) => a.publish.localeCompare(b.publish));
   if (!rows.length) {
     $("#calendarBoard").innerHTML = `<div class="empty-state">还没有内容规划。点击右上角“新建内容”或到设置里新增帖子主题。</div>`;
@@ -255,7 +374,7 @@ function renderCalendar() {
           </div>
           <span class="series-badge" style="background:${series?.color ?? "#2f64b7"}">${series?.code ?? "S"}</span>
         </div>
-        <div class="week-topics"><button class="topic-link" data-edit-topic="${item.id}">${item.subtitle}<small>${item.status} · ${item.okrKey}</small></button></div>
+        <div class="week-topics"><button class="topic-link" ${canEditTopic(item) ? `data-edit-topic="${item.id}"` : ""}>${item.subtitle}<small>${item.status} · ${item.okrKey}</small></button></div>
         <div class="platform-chips">${[...new Set(topicPlatforms(item))].map((chip) => `<span class="chip">${chip}</span>`).join("")}</div>
       </article>
     `;
@@ -266,7 +385,7 @@ function renderContentTable(keyword = "") {
   const lower = keyword.trim().toLowerCase();
   const rows = data.topics.filter((item) => {
     const searchable = [item.title, item.subtitle, item.owner, item.status, item.okrKey, item.postUrl, topicPlatforms(item).join(" ")].join(" ").toLowerCase();
-    return searchable.includes(lower);
+    return canSeeTopic(item) && searchable.includes(lower);
   });
   $("#contentRows").innerHTML = rows.length ? rows.map((item) => `
     <tr>
@@ -276,7 +395,7 @@ function renderContentTable(keyword = "") {
       <td>${item.owner}</td>
       <td>${item.okrKey}</td>
       <td>${item.postUrl ? `<a href="${item.postUrl}" target="_blank" rel="noreferrer">${platformFromUrl(item.postUrl)}</a>` : "未上传"}</td>
-      <td><button class="ghost-button table-action" data-edit-topic="${item.id}">编辑</button></td>
+      <td>${canEditTopic(item) ? `<button class="ghost-button table-action" data-edit-topic="${item.id}">编辑</button>` : `<span class="muted">只读</span>`}</td>
     </tr>
   `).join("") : `<tr><td colspan="7" class="empty-table">还没有帖子主题，可以从“新建内容”开始手动添加。</td></tr>`;
 }
@@ -295,8 +414,8 @@ function renderOkrMonths() {
 }
 
 function renderOkr() {
-  const monthOkrs = data.okrs.filter((item) => item.month === activeMonth);
-  const monthTopics = data.topics.filter((item) => item.month === activeMonth);
+  const monthOkrs = data.okrs.filter((item) => item.month === activeMonth && canSeeOwner(item.owner));
+  const monthTopics = data.topics.filter((item) => item.month === activeMonth && canSeeTopic(item));
   if (!monthOkrs.length) {
     $("#okrGrid").innerHTML = `<div class="empty-state">还没有月度 OKR。到设置里新增月度 OKR 后，这里会自动计算成员完成率。</div>`;
     return;
@@ -320,7 +439,7 @@ function renderOkr() {
           <span>已传链接 ${ownerTopics.filter((item) => item.postUrl).length}</span>
           <span>可发布 ${ownerTopics.filter((item) => item.status === "可发布").length}</span>
         </div>
-        <button class="ghost-button table-action" data-edit-okr="${okr.id}">编辑月度 OKR</button>
+        ${canManageOkr() ? `<button class="ghost-button table-action" data-edit-okr="${okr.id}">编辑月度 OKR</button>` : ""}
       </article>
     `;
   }).join("");
@@ -337,7 +456,7 @@ function dataForTopic(item) {
 }
 
 function renderAnalytics() {
-  const monthTopics = data.topics.filter((item) => item.month === activeMonth);
+  const monthTopics = data.topics.filter((item) => item.month === activeMonth && canSeeTopic(item));
   const totalViews = monthTopics.reduce((sum, item) => sum + dataForTopic(item).views, 0);
   const avgCompletion = average(monthTopics.map((item) => dataForTopic(item).completion).filter(Boolean));
   const avgEngagement = average(monthTopics.map((item) => dataForTopic(item).engagement).filter(Boolean));
@@ -360,7 +479,7 @@ function renderAnalytics() {
       const stats = dataForTopic(item);
       const decision = !item.postUrl ? "待链接" : stats.completion >= 45 && stats.engagement >= 6 ? "Go" : stats.completion >= 32 ? "优化重测" : "No-Go";
       return `
-        <div class="post-row editable-row" data-edit-topic="${item.id}">
+        <div class="post-row ${canEditTopic(item) ? "editable-row" : ""}" ${canEditTopic(item) ? `data-edit-topic="${item.id}"` : ""}>
           <div><strong>${item.title}</strong><span>${item.owner} · ${getSeries(item.seriesId)?.name ?? ""}</span></div>
           <span>${item.postUrl ? platformFromUrl(item.postUrl) : "未上传"}</span>
           <span>${stats.views ? stats.views.toLocaleString("zh-CN") : "-"}</span>
@@ -388,6 +507,10 @@ function platformFromUrl(url) {
 }
 
 function renderSystemEditor() {
+  if (!canManageSystem()) {
+    $("#systemEditor").innerHTML = `<div class="empty-state">当前账号不能管理系统设置和团队账号。</div>`;
+    return;
+  }
   $("#systemEditor").innerHTML = `
     <div class="system-edit-grid">
       <button class="ghost-button" data-new-topic="1">新增帖子主题</button>
@@ -410,7 +533,18 @@ function renderSystemEditor() {
 }
 
 function openTopicEditor(id) {
-  const item = data.topics.find((topicItem) => topicItem.id === id) ?? topic("", "", data.series[0]?.id ?? "", data.owners[0]?.name ?? "", activeMonth, "脚本待定", "", [], [], "", "", "", "");
+  if (!currentPermissions().canCreateTopic) {
+    alert(roleLockedMessage());
+    return;
+  }
+  const item = data.topics.find((topicItem) => topicItem.id === id) ?? topic("", "", data.series[0]?.id ?? "", currentAccount?.owner ?? data.owners[0]?.name ?? "", activeMonth, "脚本待定", "", [], [], "", "", "", "");
+  if (item.id && !canEditTopic(item)) {
+    alert(roleLockedMessage());
+    return;
+  }
+  const ownerOptions = data.owners
+    .filter((owner) => currentPermissions().topicScope === "all" || owner.name === currentAccount?.owner)
+    .map((owner) => [owner.name, owner.name]);
   openEditor({
     scope: "帖子主题",
     title: item.id ? `编辑：${item.title}` : "新增帖子主题",
@@ -419,7 +553,7 @@ function openTopicEditor(id) {
       textField("title", "主题标题", item.title),
       textField("subtitle", "主题说明", item.subtitle),
       selectField("seriesId", "所属系列", item.seriesId, data.series.map((seriesItem) => [seriesItem.id, seriesItem.name])),
-      selectField("owner", "负责人", item.owner, data.owners.map((owner) => [owner.name, owner.name])),
+      selectField("owner", "负责人", item.owner, ownerOptions),
       monthField("month", "OKR 月份", item.month || activeMonth),
       selectField("status", "状态", item.status, ["待审核", "剪辑中", "可发布", "脚本待定", "拍摄中", "待分镜"].map((value) => [value, value])),
       textField("okrKey", "关联 KR", item.okrKey),
@@ -457,6 +591,10 @@ function openTopicEditor(id) {
 }
 
 function openSeriesEditor(id = "") {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
   const item = getSeries(id) ?? { id: "", code: "", name: "", position: "", audience: "", main: "", color: "#2f64b7", bundles: [] };
   openEditor({
     scope: "系统配置",
@@ -501,6 +639,10 @@ function openSeriesEditor(id = "") {
 }
 
 function openBundleEditor(id = "") {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
   const item = getBundle(id) ?? { id: "", name: "", platforms: [], format: "", usage: "" };
   openEditor({
     scope: "系统配置",
@@ -551,6 +693,10 @@ function openBundleEditor(id = "") {
 }
 
 function openOwnerEditor(name) {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
   const item = getOwner(name) ?? { name: "", title: "" };
   const account = data.accounts.find((accountItem) => accountItem.owner === item.name) ?? { id: "", username: "", owner: item.name, role: "editor", passwordHash: "", status: "启用" };
   openEditor({
@@ -633,6 +779,10 @@ function openOwnerEditor(name) {
 }
 
 async function openAccountEditor(id) {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
   const item = getAccount(id) ?? { id: "", username: "", owner: data.owners[0]?.name ?? "", role: "editor", passwordHash: "", status: "启用" };
   openEditor({
     scope: "账号与角色",
@@ -691,6 +841,10 @@ async function openAccountEditor(id) {
 }
 
 function openOkrEditor(id) {
+  if (!canManageOkr()) {
+    alert(roleLockedMessage());
+    return;
+  }
   const exists = data.okrs.some((okr) => okr.id === id);
   const item = data.okrs.find((okr) => okr.id === id) ?? monthlyOkr(activeMonth, data.owners[0]?.name ?? "", "新的月度 Objective", [["关键结果", 1, 0, ""]]);
   openEditor({
@@ -857,6 +1011,7 @@ function downloadSchedule() {
 }
 
 function switchView(viewId) {
+  if (!canAccessView(viewId)) viewId = firstAllowedView();
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
   $("#homeBanner").hidden = viewId !== "overview";
@@ -869,7 +1024,10 @@ function bindEvents() {
     currentAccount = null;
     showLogin();
   });
-  $("#newTopicButton").addEventListener("click", () => openTopicEditor());
+  $("#newTopicButton").addEventListener("click", () => {
+    if (!currentPermissions().canCreateTopic) return alert(roleLockedMessage());
+    openTopicEditor();
+  });
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $$(".segmented button[data-month]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -882,9 +1040,13 @@ function bindEvents() {
     renderCalendar();
   });
   $("#contentSearch").addEventListener("input", (event) => renderContentTable(event.target.value));
-  $("#exportButton").addEventListener("click", downloadSchedule);
+  $("#exportButton").addEventListener("click", () => {
+    if (!canExport()) return alert(roleLockedMessage());
+    downloadSchedule();
+  });
   $("#simulateButton").addEventListener("click", () => {
-    data.topics.filter((item) => item.month === activeMonth).forEach((item) => {
+    if (!canEditData()) return alert(roleLockedMessage());
+    data.topics.filter((item) => item.month === activeMonth && canSeeTopic(item)).forEach((item) => {
       if (item.postUrl) item.views = Math.round((Number(item.views) || dataForTopic(item).views) * 1.08);
     });
     saveAndRefresh();
