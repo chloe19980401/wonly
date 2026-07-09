@@ -1293,6 +1293,93 @@ select {
   text-align: left;
 }
 
+.design-schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.design-schedule-head div {
+  display: grid;
+  gap: 4px;
+}
+
+.design-schedule-head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.design-schedule-table {
+  display: grid;
+  gap: 8px;
+}
+
+.design-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(90px, 0.7fr) minmax(90px, 0.7fr) minmax(80px, 0.6fr) minmax(80px, 0.6fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+}
+
+.design-row small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.design-head {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.design-row.is-delayed {
+  border-color: #e4a3a3;
+  background: #fff7f7;
+}
+
+.checkbox-group {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.checkbox-group legend {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.checkbox-group div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .edit-card {
   width: min(1080px, 100%);
 }
@@ -1671,5 +1758,13 @@ code {
 
   .search-box {
     min-width: 0;
+  }
+
+  .design-row {
+    grid-template-columns: 1fr;
+  }
+
+  .design-head {
+    display: none;
   }
 }

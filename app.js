@@ -68,6 +68,9 @@ const REAL_OWNERS = [
 const REAL_OWNER_NAMES = new Set(REAL_OWNERS.map((owner) => owner.name));
 const LEGACY_OWNER_NAMES = new Set(["Mia", "Leo", "Anna", "Chris", "Jay"]);
 const FALLBACK_OWNER = REAL_OWNERS[0].name;
+const DESIGNERS = [{ name: "赵琳", title: "协助设计师" }];
+const CONTENT_TYPES = ["视频", "图文"];
+const PUBLISH_PLATFORMS = ["YouTube", "TikTok", "Instagram", "Facebook", "LinkedIn"];
 
 const defaultData = {
   activeMonth: "2026-07",
@@ -88,6 +91,7 @@ const defaultData = {
     { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", cycle: "每周 1 个主题，连续 12 周", conclusion: "用强冲突测试制造记忆点，适合快速判断产品卖点是否成立。", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
   ],
   topics: [],
+  designTasks: [],
   okrs: [],
 };
 
@@ -100,7 +104,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 function topic(title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl) {
-  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl };
+  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, platforms: [], contentType: "视频", designer: "" };
 }
 
 function monthlyOkr(month, owner, objective, keyResults) {
@@ -184,6 +188,25 @@ function normalizeData(next) {
     });
   });
 
+  if (!Array.isArray(next.designTasks)) {
+    next.designTasks = [];
+    changed = true;
+  }
+  next.topics.forEach((item) => {
+    if (!Array.isArray(item.platforms)) {
+      item.platforms = Array.isArray(item.bundles) ? platformsFromBundles(item.bundles, next.platformBundles) : [];
+      changed = true;
+    }
+    if (!item.contentType) {
+      item.contentType = "视频";
+      changed = true;
+    }
+    if (item.designer === undefined) {
+      item.designer = "";
+      changed = true;
+    }
+  });
+
   if (changed) localStorage.setItem(DATA_KEY, JSON.stringify(next));
   return next;
 }
@@ -207,6 +230,16 @@ function getOwner(name) {
 
 function getAccount(id) {
   return data.accounts.find((item) => item.id === id);
+}
+
+function platformsFromBundles(bundleIds = [], bundles = data?.platformBundles || []) {
+  return [...new Set(bundleIds.flatMap((bundleId) => bundles.find((bundle) => bundle.id === bundleId)?.platforms ?? []))];
+}
+
+function topicPlatforms(item) {
+  const selected = Array.isArray(item.platforms) ? item.platforms.filter(Boolean) : [];
+  if (selected.length) return selected;
+  return platformsFromBundles(item.bundles);
 }
 
 function currentPermissions() {
@@ -260,10 +293,6 @@ function canExport() {
 
 function roleLockedMessage() {
   return "当前账号没有这个操作权限。";
-}
-
-function topicPlatforms(item) {
-  return item.bundles.flatMap((id) => getBundle(id)?.platforms ?? []);
 }
 
 function monthLabel(month) {
@@ -362,6 +391,7 @@ function renderAll() {
   renderOkr();
   renderAnalytics();
   renderSystemEditor();
+  renderDesignSchedule();
   applyRoleAccess();
 }
 
@@ -517,7 +547,7 @@ function renderContentTable(keyword = "") {
   });
   $("#contentRows").innerHTML = rows.length ? rows.map((item) => `
     <tr>
-      <td class="content-title"><strong>${item.title}</strong><span>${getSeries(item.seriesId)?.name ?? ""} · ${item.subtitle}</span></td>
+      <td class="content-title"><strong>${item.title}</strong><span>${getSeries(item.seriesId)?.name ?? ""} · ${item.subtitle} · ${item.contentType || "未选形式"}${item.designer ? ` · ${item.designer}协助` : ""}</span></td>
       <td>${[...new Set(topicPlatforms(item))].join(" / ")}</td>
       <td><span class="status">${item.status}</span></td>
       <td>${item.owner}</td>
@@ -657,6 +687,70 @@ function platformFromUrl(url) {
   return "待识别";
 }
 
+function designTaskIdForTopic(topicId) {
+  return `design-${topicId}`;
+}
+
+function syncDesignTaskForTopic(item) {
+  if (!Array.isArray(data.designTasks)) data.designTasks = [];
+  const taskId = designTaskIdForTopic(item.id);
+  const index = data.designTasks.findIndex((task) => task.id === taskId);
+  if (!item.designer) {
+    if (index >= 0) data.designTasks.splice(index, 1);
+    return;
+  }
+  const existing = index >= 0 ? data.designTasks[index] : {};
+  const next = {
+    id: taskId,
+    source: "topic",
+    topicId: item.id,
+    title: item.title,
+    requester: item.owner,
+    designer: item.designer,
+    contentType: item.contentType || "视频",
+    platforms: topicPlatforms(item),
+    dueDate: item.publish || item.shoot || "",
+    status: existing.status || "待设计",
+    delayed: Boolean(existing.delayed),
+    assetUrl: existing.assetUrl || "",
+    note: existing.note || "",
+  };
+  if (index >= 0) data.designTasks[index] = next;
+  else data.designTasks.push(next);
+}
+
+function renderDesignSchedule() {
+  const mount = $("#designSchedule");
+  if (!mount) return;
+  if (!canManageSystem()) {
+    mount.innerHTML = `<div class="empty-state">当前账号不能管理设计排期。</div>`;
+    return;
+  }
+  const rows = (data.designTasks || []).slice().sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""));
+  mount.innerHTML = `
+    <div class="design-schedule-head">
+      <div>
+        <strong>赵琳设计排期表</strong>
+        <span>${rows.length} 个设计需求</span>
+      </div>
+      <button class="primary-button" data-new-design-task="1">添加设计需求</button>
+    </div>
+    <div class="design-schedule-table">
+      <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>负责人</span><span>截止</span><span>状态</span><span>成品</span></div>
+      ${rows.length ? rows.map((task) => `
+        <button class="design-row ${task.delayed ? "is-delayed" : ""}" data-edit-design-task="${task.id}">
+          <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · ${task.designer}</small></span>
+          <span>${(task.platforms || []).join(" / ") || "未选平台"} · ${task.contentType || "未选形式"}</span>
+          <span>${task.requester || "未填写"}</span>
+          <span>${task.dueDate || "待定"}</span>
+          <span><i class="status ${task.delayed ? "risk" : ""}">${task.delayed ? "延期" : task.status}</i></span>
+          <span>${task.assetUrl ? "已上传" : "未上传"}</span>
+        </button>
+      `).join("") : `<div class="empty-state">还没有设计排期。运营在主题里选择协助设计师后会自动生成，也可以手动添加。</div>`}
+    </div>
+  `;
+}
+
 function renderSystemEditor() {
   if (!canManageSystem()) {
     $("#systemEditor").innerHTML = `<div class="empty-state">当前账号不能管理系统设置和团队账号。</div>`;
@@ -711,6 +805,9 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
       textField("subtitle", "主题说明", item.subtitle),
       selectField("seriesId", "所属系列", item.seriesId, data.series.map((seriesItem) => [seriesItem.id, seriesItem.name])),
       selectField("owner", "负责人", item.owner, ownerOptions),
+      checkboxGroupField("platforms", "发布平台", topicPlatforms(item), PUBLISH_PLATFORMS),
+      selectField("contentType", "内容形式", item.contentType || "视频", CONTENT_TYPES.map((value) => [value, value])),
+      selectField("designer", "协助设计师", item.designer || "", [["", "不需要设计协助"], ...DESIGNERS.map((designer) => [designer.name, designer.name])]),
       monthField("month", "OKR 月份", item.month || activeMonth),
       selectField("status", "状态", item.status, ["待审核", "剪辑中", "可发布", "脚本待定", "拍摄中", "待分镜"].map((value) => [value, value])),
       textField("okrKey", "关联 KR", item.okrKey),
@@ -728,6 +825,7 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
     deleteLabel: item.id ? "删除帖子主题" : "",
     onDelete: item.id ? () => {
       data.topics = data.topics.filter((topicItem) => topicItem.id !== item.id);
+      data.designTasks = (data.designTasks || []).filter((task) => task.topicId !== item.id);
       saveAndRefresh();
     } : null,
     onSave(values) {
@@ -735,12 +833,14 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
         ...item,
         ...values,
         id: item.id || idFrom(values.title),
+        platforms: arrayValue(values.platforms).filter(Boolean),
         bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean),
         references: values.references.split("\n").map((value) => value.trim()).filter(Boolean),
       };
       const index = data.topics.findIndex((topicItem) => topicItem.id === item.id);
       if (index >= 0) data.topics[index] = next;
       else data.topics.push(next);
+      syncDesignTaskForTopic(next);
       activeMonth = next.month || activeMonth;
       saveAndRefresh();
     },
@@ -792,6 +892,65 @@ function openSeriesEditor(id = "") {
       } else {
         data.series.push(next);
       }
+      saveAndRefresh();
+    },
+  });
+}
+
+function openDesignTaskEditor(id = "") {
+  if (!canManageSystem()) {
+    alert(roleLockedMessage());
+    return;
+  }
+  const exists = (data.designTasks || []).find((task) => task.id === id);
+  const item = exists ?? {
+    id: "",
+    source: "manual",
+    topicId: "",
+    title: "",
+    requester: currentAccount?.owner || FALLBACK_OWNER,
+    designer: DESIGNERS[0].name,
+    contentType: "图文",
+    platforms: [],
+    dueDate: "",
+    status: "待设计",
+    delayed: false,
+    assetUrl: "",
+    note: "",
+  };
+  openEditor({
+    scope: "设计排期",
+    title: item.id ? `编辑设计需求：${item.title}` : "新增设计需求",
+    hint: "手动需求会进入赵琳排期表；主题联动需求会继续跟随主题标题、平台、负责人和发布时间。",
+    fields: [
+      textField("title", "设计需求", item.title),
+      selectField("designer", "设计师", item.designer || DESIGNERS[0].name, DESIGNERS.map((designer) => [designer.name, designer.name])),
+      selectField("requester", "需求负责人", item.requester || FALLBACK_OWNER, data.owners.map((owner) => [owner.name, owner.name])),
+      checkboxGroupField("platforms", "发布平台", item.platforms || [], PUBLISH_PLATFORMS),
+      selectField("contentType", "内容形式", item.contentType || "图文", CONTENT_TYPES.map((value) => [value, value])),
+      textField("dueDate", "设计截止时间", item.dueDate || ""),
+      selectField("status", "设计状态", item.status || "待设计", ["待设计", "设计中", "待确认", "已完成"].map((value) => [value, value])),
+      selectField("delayed", "是否延期", item.delayed ? "true" : "false", [["false", "未延期"], ["true", "已延期"]]),
+      textField("assetUrl", "成品文件/链接", item.assetUrl || ""),
+      textareaField("note", "备注", item.note || ""),
+    ],
+    deleteLabel: item.id ? "删除设计需求" : "",
+    onDelete: item.id ? () => {
+      data.designTasks = (data.designTasks || []).filter((task) => task.id !== item.id);
+      saveAndRefresh();
+    } : null,
+    onSave(values) {
+      const next = {
+        ...item,
+        ...values,
+        id: item.id || `design-manual-${Date.now()}`,
+        source: item.source || "manual",
+        platforms: arrayValue(values.platforms).filter(Boolean),
+        delayed: values.delayed === "true",
+      };
+      const index = (data.designTasks || []).findIndex((task) => task.id === item.id);
+      if (index >= 0) data.designTasks[index] = next;
+      else data.designTasks.push(next);
       saveAndRefresh();
     },
   });
@@ -1104,7 +1263,7 @@ function openDataImportEditor() {
 }
 
 function validateImportedData(next) {
-  ["owners", "accounts", "platformBundles", "series", "topics", "okrs"].forEach((key) => {
+  ["owners", "accounts", "platformBundles", "series", "topics", "designTasks", "okrs"].forEach((key) => {
     if (!Array.isArray(next[key])) throw new Error(`缺少 ${key} 列表`);
   });
   if (!next.owners.length) throw new Error("至少需要一个成员");
@@ -1185,6 +1344,18 @@ function textareaField(name, label, value = "") {
 
 function selectField(name, label, value, options) {
   return `<label><span>${label}</span><select name="${name}">${options.map(([optionValue, optionLabel]) => `<option value="${escapeAttr(optionValue)}" ${optionValue === value ? "selected" : ""}>${optionLabel}</option>`).join("")}</select></label>`;
+}
+
+function checkboxGroupField(name, label, selectedValues = [], options = []) {
+  const selected = new Set(arrayValue(selectedValues));
+  return `
+    <fieldset class="wide checkbox-group">
+      <legend>${label}</legend>
+      <div>
+        ${options.map((option) => `<label><input type="checkbox" name="${name}" value="${escapeAttr(option)}" ${selected.has(option) ? "checked" : ""} /><span>${option}</span></label>`).join("")}
+      </div>
+    </fieldset>
+  `;
 }
 
 function okrStructureField(item) {
@@ -1350,11 +1521,12 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
+    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-design-task],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-design-task],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
     if (target.dataset.viewSeries) openSeriesTopics(target.dataset.viewSeries);
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
+    if (target.dataset.editDesignTask) openDesignTaskEditor(target.dataset.editDesignTask);
     if (target.dataset.editBundle) openBundleEditor(target.dataset.editBundle);
     if (target.dataset.editOwner) openOwnerEditor(target.dataset.editOwner);
     if (target.dataset.editAccount) openAccountEditor(target.dataset.editAccount);
@@ -1365,6 +1537,7 @@ function bindEvents() {
     }
     if (target.dataset.newTopic) openTopicEditor();
     if (target.dataset.newTopicForSeries) openTopicEditor("", target.dataset.newTopicForSeries);
+    if (target.dataset.newDesignTask) openDesignTaskEditor();
     if (target.dataset.newOkr) openOkrEditor();
     if (target.dataset.newOwner) openOwnerEditor();
     if (target.dataset.newAccount) openAccountEditor();
