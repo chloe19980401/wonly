@@ -1278,7 +1278,8 @@ select {
   font-weight: 800;
 }
 
-.edit-grid label.wide {
+.edit-grid label.wide,
+.edit-grid .wide {
   grid-column: span 2;
 }
 
@@ -1305,6 +1306,73 @@ select {
 .edit-grid textarea:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(47, 100, 183, 0.12);
+}
+
+.okr-builder {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(47, 100, 183, 0.24);
+  border-radius: 10px;
+  background: #f7faff;
+}
+
+.okr-objective-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.okr-objective-card label {
+  margin: 0;
+}
+
+.okr-objective-card textarea {
+  min-height: 88px;
+}
+
+.okr-index {
+  display: inline-grid;
+  min-width: 42px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: #4f82f2;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.okr-kr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.okr-kr-header strong {
+  color: var(--ink);
+}
+
+.okr-kr-list {
+  display: grid;
+  gap: 10px;
+}
+
+.okr-kr-row {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) minmax(86px, 0.4fr) minmax(86px, 0.4fr) minmax(86px, 0.4fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
 }
 
 .edit-actions {
@@ -1501,8 +1569,18 @@ code {
   }
 
   .detail-script,
-  .edit-grid label.wide {
+  .edit-grid label.wide,
+  .edit-grid .wide {
     grid-column: auto;
+  }
+
+  .okr-objective-card,
+  .okr-kr-row {
+    grid-template-columns: 1fr;
+  }
+
+  .okr-index {
+    width: max-content;
   }
 
   .hero-metrics {

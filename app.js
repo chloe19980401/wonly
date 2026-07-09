@@ -922,33 +922,58 @@ function openOkrEditor(id) {
     return;
   }
   const exists = data.okrs.some((okr) => okr.id === id);
-  const item = data.okrs.find((okr) => okr.id === id) ?? monthlyOkr(activeMonth, data.owners[0]?.name ?? "", "新的月度 Objective", [["关键结果", 1, 0, ""]]);
+  const item = data.okrs.find((okr) => okr.id === id) ?? monthlyOkr(activeMonth, data.owners[0]?.name ?? "", "", [["", 0, 0, ""]]);
   openEditor({
     scope: "月度 OKR",
     title: exists ? `编辑：${item.owner} ${monthLabel(item.month)}` : "新增月度 OKR",
-    hint: "OKR 是月度绩效管理工具：O 写方向，KR 写可量化结果，完成率由实际值/目标值计算。",
+    hint: "按 Objective 和 Key Result 的层级填写：先写目标，再添加可量化的关键结果。",
     fields: [
       monthField("month", "月份", item.month),
       selectField("owner", "成员", item.owner, data.owners.map((owner) => [owner.name, owner.name])),
-      textareaField("objective", "Objective", item.objective),
-      textareaField("keyResultsText", "Key Results，每行：名称 | 目标 | 实际 | 单位", item.keyResults.map((kr) => `${kr.name} | ${kr.target} | ${kr.actual} | ${kr.unit}`).join("\n")),
+      okrStructureField(item),
     ],
+    onMount() {
+      const list = $("#okrKrList");
+      $("#addKrButton").onclick = () => {
+        list.insertAdjacentHTML("beforeend", okrKeyResultRow({ name: "", target: 0, actual: 0, unit: "" }, list.children.length));
+      };
+      list.onclick = (event) => {
+        const removeButton = event.target.closest("[data-remove-kr]");
+        if (!removeButton || list.children.length <= 1) return;
+        removeButton.closest(".okr-kr-row").remove();
+      };
+    },
     deleteLabel: exists ? "删除月度 OKR" : "",
     onDelete: exists ? () => {
       data.okrs = data.okrs.filter((okr) => okr.id !== item.id);
       saveAndRefresh();
     } : null,
     onSave(values) {
+      const krNames = arrayValue(values.krName);
+      const krTargets = arrayValue(values.krTarget);
+      const krActuals = arrayValue(values.krActual);
+      const krUnits = arrayValue(values.krUnit);
+      const keyResults = krNames.map((name, index) => ({
+        name: String(name ?? "").trim(),
+        target: Number(krTargets[index] || 0),
+        actual: Number(krActuals[index] || 0),
+        unit: String(krUnits[index] ?? "").trim(),
+      })).filter((kr) => kr.name);
+      if (!values.objective.trim()) {
+        alert("请填写 Objective。");
+        return false;
+      }
+      if (!keyResults.length) {
+        alert("请至少填写一个 Key Result。");
+        return false;
+      }
       const next = {
         ...item,
         month: values.month,
         owner: values.owner,
-        objective: values.objective,
+        objective: values.objective.trim(),
         id: item.id || idFrom(`${values.month}-${values.owner}-${Date.now()}`),
-        keyResults: values.keyResultsText.split("\n").map((line) => {
-          const [name, target, actual, unit] = line.split("|").map((part) => part.trim());
-          return { name, target: Number(target || 0), actual: Number(actual || 0), unit: unit || "" };
-        }).filter((kr) => kr.name),
+        keyResults,
       };
       const index = data.okrs.findIndex((okr) => okr.id === item.id);
       if (index >= 0) data.okrs[index] = next;
@@ -1008,7 +1033,7 @@ function openEditor(config) {
   `;
   $("#editForm").onsubmit = async (event) => {
     event.preventDefault();
-    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const values = formValues(event.currentTarget);
     const shouldClose = await config.onSave(values);
     if (shouldClose !== false) closeEditor();
   };
@@ -1021,6 +1046,25 @@ function openEditor(config) {
   }
   $("#cancelEditButton").onclick = closeEditor;
   $("#editModal").hidden = false;
+  config.onMount?.();
+}
+
+function formValues(form) {
+  const values = {};
+  new FormData(form).forEach((value, key) => {
+    if (Object.hasOwn(values, key)) {
+      values[key] = Array.isArray(values[key]) ? values[key].concat(value) : [values[key], value];
+    } else {
+      values[key] = value;
+    }
+  });
+  return values;
+}
+
+function arrayValue(value) {
+  if (Array.isArray(value)) return value;
+  if (value === undefined) return [];
+  return [value];
 }
 
 function textField(name, label, value = "") {
@@ -1045,6 +1089,41 @@ function textareaField(name, label, value = "") {
 
 function selectField(name, label, value, options) {
   return `<label><span>${label}</span><select name="${name}">${options.map(([optionValue, optionLabel]) => `<option value="${escapeAttr(optionValue)}" ${optionValue === value ? "selected" : ""}>${optionLabel}</option>`).join("")}</select></label>`;
+}
+
+function okrStructureField(item) {
+  const keyResults = item.keyResults?.length ? item.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }];
+  return `
+    <section class="okr-builder wide">
+      <div class="okr-objective-card">
+        <span class="okr-index">O1</span>
+        <label>
+          <span>Objective</span>
+          <textarea name="objective" placeholder="添加 Objective：目标要与团队方向对齐，避免含糊描述">${escapeHtml(item.objective || "")}</textarea>
+        </label>
+      </div>
+      <div class="okr-kr-header">
+        <strong>Key Results</strong>
+        <button class="ghost-button" type="button" id="addKrButton">＋ 添加 Key Result</button>
+      </div>
+      <div class="okr-kr-list" id="okrKrList">
+        ${keyResults.map((kr, index) => okrKeyResultRow(kr, index)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function okrKeyResultRow(kr, index) {
+  return `
+    <div class="okr-kr-row">
+      <span class="okr-index">KR${index + 1}</span>
+      <input name="krName" value="${escapeAttr(kr.name || "")}" placeholder="添加 Key Result" />
+      <input type="number" step="0.1" min="0" name="krTarget" value="${escapeAttr(kr.target ?? 0)}" placeholder="目标" />
+      <input type="number" step="0.1" min="0" name="krActual" value="${escapeAttr(kr.actual ?? 0)}" placeholder="实际" />
+      <input name="krUnit" value="${escapeAttr(kr.unit || "")}" placeholder="单位" />
+      <button class="icon-button" type="button" data-remove-kr title="删除 KR" aria-label="删除 KR">×</button>
+    </div>
+  `;
 }
 
 function escapeHtml(value) {
