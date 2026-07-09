@@ -6,6 +6,7 @@ const DATA_KEY = "wonly-editable-social-system-v3";
 const ROLE_LABELS = {
   admin: "管理员",
   manager: "运营主管",
+  marketing: "市场部运营",
   editor: "内容编辑",
   viewer: "只读成员",
 };
