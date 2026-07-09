@@ -549,6 +549,21 @@ h1 {
   line-height: 1.55;
 }
 
+.series-meta {
+  display: grid;
+  gap: 6px;
+  min-height: 64px;
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.series-meta span:first-child {
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
 .mini-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1001,6 +1016,28 @@ select {
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.75;
+}
+
+.series-topic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.topic-detail-link {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.topic-detail-link span {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .detail-times {

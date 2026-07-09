@@ -82,10 +82,10 @@ const defaultData = {
     { id: "data-thread", name: "观点传播包", platforms: ["LinkedIn Post", "Facebook Quote Card"], format: "数据点、对比图、金句卡", usage: "把测试结果和对比数据拆成连续观点，适合复盘和传播。" },
   ],
   series: [
-    { id: "s1", code: "S1", name: "只看王力门", position: "品牌实力展示", audience: "B2B + C端", main: "TikTok + LinkedIn", color: "#0f8f61", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
-    { id: "s2", code: "S2", name: "Gossip Girl", position: "场景化生活方式", audience: "C端女性", main: "TikTok + Instagram", color: "#b64f78", bundles: ["shorts-core", "visual-social"] },
-    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
-    { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
+    { id: "s1", code: "S1", name: "只看王力门", position: "品牌实力展示", audience: "B2B + C端", main: "TikTok + LinkedIn", cycle: "每周 1 个主题，连续 12 周", conclusion: "用工厂实力和真实测试建立信任，适合沉淀长线品牌资产。", color: "#0f8f61", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
+    { id: "s2", code: "S2", name: "Gossip Girl", position: "场景化生活方式", audience: "C端女性", main: "TikTok + Instagram", cycle: "每周 1-2 个主题，连续 12 周", conclusion: "用生活化场景拉近距离，适合测试审美、情绪和人群偏好。", color: "#b64f78", bundles: ["shorts-core", "visual-social"] },
+    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", cycle: "每周 1 个主题，连续 12 周", conclusion: "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
+    { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", cycle: "每周 1 个主题，连续 12 周", conclusion: "用强冲突测试制造记忆点，适合快速判断产品卖点是否成立。", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
   ],
   topics: [],
   okrs: [],
@@ -160,6 +160,19 @@ function normalizeData(next) {
     changed = true;
   }
   if (!next.accounts.length) next.accounts = clone(defaultData.accounts);
+
+  if (!Array.isArray(next.series)) next.series = clone(defaultData.series);
+  next.series = next.series.map((seriesItem, index) => {
+    const fallback = defaultData.series[index] ?? defaultData.series[0];
+    const normalized = {
+      ...seriesItem,
+      cycle: seriesItem.cycle || fallback?.cycle || "每周 1 个主题，连续 12 周",
+      conclusion: seriesItem.conclusion || fallback?.conclusion || "等待复盘结论。",
+      bundles: Array.isArray(seriesItem.bundles) ? seriesItem.bundles : [],
+    };
+    if (JSON.stringify(normalized) !== JSON.stringify(seriesItem)) changed = true;
+    return normalized;
+  });
 
   ["topics", "okrs"].forEach((key) => {
     if (!Array.isArray(next[key])) next[key] = [];
@@ -364,13 +377,17 @@ function renderSeries() {
       ? `<button class="series-badge" style="background:${item.color}" data-edit-series="${item.id}" title="编辑系列">${item.code}</button>`
       : `<span class="series-badge" style="background:${item.color}">${item.code}</span>`;
     return `
-      <article class="series-card">
+      <article class="series-card series-button" data-view-series="${item.id}" tabindex="0" role="button" aria-label="查看${escapeAttr(item.name)}主题列表">
         <div class="series-top">
           ${seriesBadge}
           <span class="tag">${item.main}</span>
         </div>
         <h3>${item.name}</h3>
         <p>${item.position}，面向 ${item.audience}。</p>
+        <div class="series-meta">
+          <span>${item.cycle || "未设置周期"}</span>
+          <span>${item.conclusion || "未填写结论"}</span>
+        </div>
         <div class="mini-stats">
           <div><strong>${topics.length}</strong><span>主题</span></div>
           <div><strong>${item.bundles.length}</strong><span>平台包</span></div>
@@ -379,6 +396,46 @@ function renderSeries() {
       </article>
     `;
   }).join("");
+}
+
+function openSeriesTopics(seriesId) {
+  const series = getSeries(seriesId);
+  if (!series) return;
+  const topics = data.topics
+    .filter((topicItem) => topicItem.seriesId === series.id && canSeeTopic(topicItem))
+    .sort((a, b) => (a.publish || "").localeCompare(b.publish || ""));
+  const canAddTopic = currentPermissions().canCreateTopic;
+  $("#detailSeries").textContent = `${series.code} · ${series.cycle || "未设置周期"}`;
+  $("#detailTitle").textContent = series.name;
+  $("#detailSubtitle").textContent = `${series.position}，面向 ${series.audience}。${series.conclusion || ""}`;
+  $("#detailPlatforms").innerHTML = series.bundles.length
+    ? series.bundles.map((bundleId) => `<span class="chip">${getBundle(bundleId)?.name ?? bundleId}</span>`).join("")
+    : `<span class="muted">还没有配置平台包</span>`;
+  $("#detailOkr").innerHTML = `
+    <div><strong>主要平台</strong><span>${series.main || "未设置"}</span></div>
+    <div><strong>周期</strong><span>${series.cycle || "未设置"}</span></div>
+    <div><strong>结论</strong><span>${series.conclusion || "未填写"}</span></div>
+  `;
+  $("#detailReferences").innerHTML = topics.length
+    ? topics.map((topicItem) => `<li>${canEditTopic(topicItem)
+      ? `<button class="topic-detail-link" data-edit-topic="${topicItem.id}">${topicItem.title}<span>${topicItem.owner} · ${topicItem.status}</span></button>`
+      : `<span class="topic-detail-link">${topicItem.title}<span>${topicItem.owner} · ${topicItem.status}</span></span>`}</li>`).join("")
+    : `<li class="muted">这个系列还没有主题。</li>`;
+  $("#detailLinks").innerHTML = `
+    <div><strong>主题数量</strong><span>${topics.length}</span></div>
+    <div><strong>已发链接</strong><span>${topics.filter((topicItem) => topicItem.postUrl).length}</span></div>
+    <div><strong>本月主题</strong><span>${topics.filter((topicItem) => topicItem.month === activeMonth).length}</span></div>
+  `;
+  $("#detailScript").innerHTML = `
+    <div class="series-topic-actions">
+      ${canAddTopic ? `<button class="primary-button" data-new-topic-for-series="${series.id}">添加主题</button>` : ""}
+      ${canManageSystem() ? `<button class="ghost-button" data-edit-series="${series.id}">编辑系列</button>` : ""}
+    </div>
+  `;
+  $("#detailTimes").innerHTML = topics.length
+    ? topics.map((topicItem) => `<div><strong>${topicItem.publish || "发布时间待定"}</strong><span>${topicItem.title} · ${topicItem.okrKey || "未关联 KR"}</span></div>`).join("")
+    : `<div><strong>暂无排期</strong><span>添加主题后会在这里展示发布时间。</span></div>`;
+  $("#detailModal").hidden = false;
 }
 
 function renderBundles() {
@@ -631,12 +688,13 @@ function renderSystemEditor() {
   `;
 }
 
-function openTopicEditor(id) {
+function openTopicEditor(id = "", defaultSeriesId = "") {
   if (!currentPermissions().canCreateTopic) {
     alert(roleLockedMessage());
     return;
   }
-  const item = data.topics.find((topicItem) => topicItem.id === id) ?? topic("", "", data.series[0]?.id ?? "", currentAccount?.owner ?? data.owners[0]?.name ?? "", activeMonth, "脚本待定", "", [], [], "", "", "", "");
+  const initialSeriesId = defaultSeriesId || (activeSeries !== "all" ? activeSeries : "") || data.series[0]?.id || "";
+  const item = data.topics.find((topicItem) => topicItem.id === id) ?? topic("", "", initialSeriesId, currentAccount?.owner ?? data.owners[0]?.name ?? "", activeMonth, "脚本待定", "", [], [], "", "", "", "");
   if (item.id && !canEditTopic(item)) {
     alert(roleLockedMessage());
     return;
@@ -694,7 +752,7 @@ function openSeriesEditor(id = "") {
     alert(roleLockedMessage());
     return;
   }
-  const item = getSeries(id) ?? { id: "", code: "", name: "", position: "", audience: "", main: "", color: "#2f64b7", bundles: [] };
+  const item = getSeries(id) ?? { id: "", code: "", name: "", position: "", audience: "", main: "", cycle: "每周 1 个主题，连续 12 周", conclusion: "", color: "#2f64b7", bundles: [] };
   openEditor({
     scope: "系统配置",
     title: item.id ? `编辑系列：${item.name}` : "新增系列",
@@ -706,8 +764,10 @@ function openSeriesEditor(id = "") {
       textField("position", "定位", item.position),
       textField("audience", "受众", item.audience),
       textField("main", "主要平台", item.main),
+      textField("cycle", "周期", item.cycle),
       textField("color", "颜色", item.color),
       textField("bundles", "平台组合 ID，用逗号分隔", item.bundles.join(",")),
+      textareaField("conclusion", "结论", item.conclusion || ""),
     ],
     deleteLabel: item.id ? "删除系列和关联主题" : "",
     onDelete: item.id ? () => {
@@ -1290,8 +1350,9 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
+    const target = event.target.closest("[data-view-series],[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-topic-for-series],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
+    if (target.dataset.viewSeries) openSeriesTopics(target.dataset.viewSeries);
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
     if (target.dataset.editBundle) openBundleEditor(target.dataset.editBundle);
@@ -1303,6 +1364,7 @@ function bindEvents() {
       saveAndRefresh();
     }
     if (target.dataset.newTopic) openTopicEditor();
+    if (target.dataset.newTopicForSeries) openTopicEditor("", target.dataset.newTopicForSeries);
     if (target.dataset.newOkr) openOkrEditor();
     if (target.dataset.newOwner) openOwnerEditor();
     if (target.dataset.newAccount) openAccountEditor();
@@ -1315,6 +1377,12 @@ function bindEvents() {
       data = loadData();
       activeMonth = data.activeMonth;
       renderAll();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if ((event.key === "Enter" || event.key === " ") && event.target?.matches?.("[data-view-series]")) {
+      event.preventDefault();
+      openSeriesTopics(event.target.dataset.viewSeries);
     }
   });
   $("#closeEditButton").addEventListener("click", closeEditor);
