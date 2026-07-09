@@ -59,17 +59,21 @@ const ROLE_PERMISSIONS = {
   },
 };
 
+const REAL_OWNERS = [
+  { name: "胡译泰", title: "运营负责人" },
+  { name: "徐一诺", title: "市场部运营" },
+  { name: "周宗莉", title: "市场部运营" },
+  { name: "周雨晴", title: "市场部运营" },
+];
+const REAL_OWNER_NAMES = new Set(REAL_OWNERS.map((owner) => owner.name));
+const LEGACY_OWNER_NAMES = new Set(["Mia", "Leo", "Anna", "Chris", "Jay"]);
+const FALLBACK_OWNER = REAL_OWNERS[0].name;
+
 const defaultData = {
   activeMonth: "2026-07",
-  owners: [
-    { name: "Mia", title: "内容策划" },
-    { name: "Leo", title: "短视频剪辑" },
-    { name: "Anna", title: "生活方式运营" },
-    { name: "Chris", title: "工厂内容运营" },
-    { name: "Jay", title: "测试内容运营" },
-  ],
+  owners: clone(REAL_OWNERS),
   accounts: [
-    { id: "acct-admin", username: ADMIN_USERNAME, owner: "Mia", role: "admin", passwordHash: ADMIN_PASSWORD_HASH, status: "启用" },
+    { id: "acct-admin", username: ADMIN_USERNAME, owner: FALLBACK_OWNER, role: "admin", passwordHash: ADMIN_PASSWORD_HASH, status: "启用" },
   ],
   platformBundles: [
     { id: "shorts-core", name: "短视频通用包", platforms: ["YouTube Shorts", "TikTok", "Instagram Reels"], format: "9:16 竖屏，15-45s，英文字幕", usage: "同一条核心视频适配三端，统一 Hook 和 CTA，只微调封面与标题。" },
@@ -116,10 +120,59 @@ function loadData() {
     const saved = JSON.parse(localStorage.getItem(DATA_KEY) || "{}");
     const next = { ...clone(defaultData), ...saved };
     next.accounts = Array.isArray(next.accounts) && next.accounts.length ? next.accounts : clone(defaultData.accounts);
-    return next;
+    return normalizeData(next);
   } catch {
-    return clone(defaultData);
+    return normalizeData(clone(defaultData));
   }
+}
+
+function normalizeData(next) {
+  let changed = false;
+  const beforeOwners = JSON.stringify(next.owners ?? []);
+  next.owners = clone(REAL_OWNERS);
+  if (beforeOwners !== JSON.stringify(next.owners)) changed = true;
+
+  next.accounts = (Array.isArray(next.accounts) ? next.accounts : [])
+    .filter((account) => account?.username)
+    .map((account) => {
+      const owner = REAL_OWNER_NAMES.has(account.owner) ? account.owner : FALLBACK_OWNER;
+      const role = ROLE_PERMISSIONS[account.role] ? account.role : "viewer";
+      const status = account.status === "停用" ? "停用" : "启用";
+      if (owner !== account.owner || role !== account.role || status !== account.status) changed = true;
+      return { ...account, owner, role, status };
+    });
+
+  const adminIndex = next.accounts.findIndex((account) => account.username === ADMIN_USERNAME);
+  const adminAccount = {
+    id: adminIndex >= 0 ? next.accounts[adminIndex].id : "acct-admin",
+    username: ADMIN_USERNAME,
+    owner: FALLBACK_OWNER,
+    role: "admin",
+    passwordHash: adminIndex >= 0 ? (next.accounts[adminIndex].passwordHash || ADMIN_PASSWORD_HASH) : ADMIN_PASSWORD_HASH,
+    status: "启用",
+  };
+  if (adminIndex >= 0) {
+    const beforeAdmin = JSON.stringify(next.accounts[adminIndex]);
+    next.accounts[adminIndex] = { ...next.accounts[adminIndex], ...adminAccount };
+    if (beforeAdmin !== JSON.stringify(next.accounts[adminIndex])) changed = true;
+  } else {
+    next.accounts.unshift(adminAccount);
+    changed = true;
+  }
+  if (!next.accounts.length) next.accounts = clone(defaultData.accounts);
+
+  ["topics", "okrs"].forEach((key) => {
+    if (!Array.isArray(next[key])) next[key] = [];
+    next[key].forEach((item) => {
+      if (!REAL_OWNER_NAMES.has(item.owner)) {
+        if (LEGACY_OWNER_NAMES.has(item.owner) || !item.owner) changed = true;
+        item.owner = FALLBACK_OWNER;
+      }
+    });
+  });
+
+  if (changed) localStorage.setItem(DATA_KEY, JSON.stringify(next));
+  return next;
 }
 
 function saveData() {
@@ -257,12 +310,30 @@ function applyRoleAccess() {
   $$(".nav-item").forEach((button) => {
     button.hidden = !allowedViews.includes(button.dataset.view);
   });
-  $("#newTopicButton").hidden = !currentPermissions().canCreateTopic;
   $("#exportButton").hidden = !canExport();
   $("#simulateButton").hidden = !canEditData();
   const activeView = $(".view.active")?.id;
   if (!activeView || !canAccessView(activeView)) switchView(firstAllowedView());
-  else $("#homeBanner").hidden = activeView !== "overview";
+  else {
+    $("#homeBanner").hidden = activeView !== "overview";
+    updatePrimaryAction(activeView);
+  }
+}
+
+function updatePrimaryAction(viewId = $(".view.active")?.id) {
+  const button = $("#newTopicButton");
+  if (!button) return;
+  const actions = {
+    overview: currentPermissions().canCreateTopic ? { label: "新建内容", action: "new-topic" } : null,
+    calendar: currentPermissions().canCreateTopic ? { label: "新建帖子", action: "new-topic" } : null,
+    library: currentPermissions().canCreateTopic ? { label: "新增主题", action: "new-topic" } : null,
+    okr: canManageOkr() ? { label: "新增 OKR", action: "new-okr" } : null,
+  };
+  const config = actions[viewId] ?? null;
+  button.hidden = !config;
+  if (!config) return;
+  button.dataset.action = config.action;
+  button.innerHTML = `<span>＋</span>${config.label}`;
 }
 
 function renderAll() {
@@ -526,7 +597,12 @@ function renderSystemEditor() {
     <div class="system-edit-list">
       <section><h4>系列</h4>${data.series.map((item) => `<button data-edit-series="${item.id}">${item.code} · ${item.name}</button>`).join("")}</section>
       <section><h4>平台组合</h4>${data.platformBundles.map((item) => `<button data-edit-bundle="${item.id}">${item.name}</button>`).join("")}</section>
-      <section><h4>成员</h4>${data.owners.map((item) => `<button data-edit-owner="${item.name}">${item.name} · ${item.title}</button>`).join("")}</section>
+      <section><h4>成员</h4>${data.owners.map((item) => {
+        const account = data.accounts.find((accountItem) => accountItem.owner === item.name);
+        const role = account ? (ROLE_LABELS[account.role] ?? account.role) : "未开通账号";
+        const status = account ? account.status : "未开通账号";
+        return `<button data-edit-owner="${item.name}">${item.name} · ${item.title} · ${role} · ${status}</button>`;
+      }).join("")}</section>
       <section class="wide-list"><h4>账号与角色</h4>${data.accounts.map((item) => `<button data-edit-account="${item.id}">${item.username} · ${ROLE_LABELS[item.role] ?? item.role} · ${item.owner || "未绑定成员"} · ${item.status}</button>`).join("")}</section>
     </div>
   `;
@@ -1015,6 +1091,7 @@ function switchView(viewId) {
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
   $("#homeBanner").hidden = viewId !== "overview";
+  updatePrimaryAction(viewId);
 }
 
 function bindEvents() {
@@ -1025,6 +1102,11 @@ function bindEvents() {
     showLogin();
   });
   $("#newTopicButton").addEventListener("click", () => {
+    if ($("#newTopicButton").dataset.action === "new-okr") {
+      if (!canManageOkr()) return alert(roleLockedMessage());
+      openOkrEditor();
+      return;
+    }
     if (!currentPermissions().canCreateTopic) return alert(roleLockedMessage());
     openTopicEditor();
   });
