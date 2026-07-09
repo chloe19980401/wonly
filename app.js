@@ -1,7 +1,14 @@
 const ADMIN_USERNAME = "chloelee";
 const ADMIN_PASSWORD_HASH = "df3dcfc0245fb6d3f508523001b0979446249420e3dc4b0081785035fc90a998";
 const SESSION_KEY = "wonly-admin-session";
-const DATA_KEY = "wonly-editable-social-system-v2";
+const DATA_KEY = "wonly-editable-social-system-v3";
+
+const ROLE_LABELS = {
+  admin: "管理员",
+  manager: "运营主管",
+  editor: "内容编辑",
+  viewer: "只读成员",
+};
 
 const defaultData = {
   activeMonth: "2026-07",
@@ -11,6 +18,9 @@ const defaultData = {
     { name: "Anna", title: "生活方式运营" },
     { name: "Chris", title: "工厂内容运营" },
     { name: "Jay", title: "测试内容运营" },
+  ],
+  accounts: [
+    { id: "acct-admin", username: ADMIN_USERNAME, owner: "Mia", role: "admin", passwordHash: ADMIN_PASSWORD_HASH, status: "启用" },
   ],
   platformBundles: [
     { id: "shorts-core", name: "短视频通用包", platforms: ["YouTube Shorts", "TikTok", "Instagram Reels"], format: "9:16 竖屏，15-45s，英文字幕", usage: "同一条核心视频适配三端，统一 Hook 和 CTA，只微调封面与标题。" },
@@ -24,36 +34,14 @@ const defaultData = {
     { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
     { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
   ],
-  topics: [
-    topic("Robot Door", "机器人防盗门", "s1", "Mia", "2026-07", "待审核", "KR1 专业信任内容", ["shorts-core", "b2b-proof"], ["机器人门开合特写", "工厂自动化产线 B-roll", "竞品普通门对比画面"], "痛点 Hook：传统门不够智能；主体：机器人门感应、开合、防护演示；CTA：Follow for Wonly-only security tech.", "2026-07-06 09:00", "2026-07-08 18:00", ""),
-    topic("6-Meter Sensing", "遥感识别", "s1", "Leo", "2026-07", "剪辑中", "KR2 短视频完播率", ["shorts-core"], ["6 米距离走近门锁", "传感器 UI 动效参考", "夜间归家场景"], "前 3 秒展示远距离感应开门；主体拆解识别距离和安全逻辑；结尾提问：Would your door recognize you first?", "2026-07-07 14:00", "2026-07-10 18:00", ""),
-    topic("360 Minutes", "超 C 级锁芯", "s1", "Mia", "2026-08", "脚本待定", "KR1 专业信任内容", ["b2b-proof", "data-thread"], ["锁芯微距", "测试计时器", "标准证书/参数卡"], "用 360 分钟防破坏测试做核心证据，短视频出结果，LinkedIn 写技术解释。", "2026-08-03 10:00", "2026-08-05 18:00", ""),
-    topic("The Morning Escape", "早高峰出门", "s2", "Anna", "2026-07", "可发布", "KR3 女性场景转化", ["shorts-core", "visual-social"], ["女主拿咖啡出门", "包包/穿搭定格", "门锁自动识别镜头"], "G 角色旁白开场；主体展示不用掏钥匙的出门体验；结尾：Spotted: someone who never looks for keys.", "2026-07-13 09:00", "2026-07-14 18:00", ""),
-    topic("The Hands-Free Hustle", "双手满载回家", "s2", "Anna", "2026-07", "脚本待定", "KR3 女性场景转化", ["shorts-core", "visual-social"], ["购物袋/快递箱", "门前无手开门", "温暖室内灯光"], "前 2 秒制造手忙脚乱；主体让门锁自动完成识别；CTA：Would your door do this?", "2026-07-15 14:00", "2026-07-17 18:00", ""),
-    topic("The Midnight Return", "午夜安全归家", "s2", "Anna", "2026-08", "待审核", "KR3 女性场景转化", ["shorts-core"], ["夜间楼道", "低光人脸识别", "安全提示 UI"], "用悬念开场，强调夜间识别和安全感，最后用 G 角色金句收尾。", "2026-08-10 20:00", "2026-08-12 18:00", ""),
-    topic("The Scale", "工厂规模展示", "s3", "Chris", "2026-07", "拍摄中", "KR4 B2B 信任背书", ["shorts-core", "visual-social"], ["航拍厂区", "产线广角", "仓储和发货画面"], "前 3 秒航拍冲击；主体展示规模、产线、效率；CTA：Comment for factory tour.", "2026-07-20 09:00", "2026-07-23 18:00", ""),
-    topic("5G Factory", "5G 智慧工厂", "s3", "Chris", "2026-07", "待审核", "KR4 B2B 信任背书", ["shorts-core", "b2b-proof"], ["数字看板", "AGV/机械臂", "质检数据屏"], "从数字化看板切入，展示 5G 工厂如何提高一致性和交付稳定性。", "2026-07-22 10:00", "2026-07-24 18:00", ""),
-    topic("Born From Steel", "从钢材到成品", "s3", "Chris", "2026-08", "脚本待定", "KR4 B2B 信任背书", ["shorts-core", "visual-social"], ["钢板切割", "焊花慢动作", "表面处理细节"], "用材料变化做叙事线，从钢材进入产线到成品门下线。", "2026-08-18 10:00", "2026-08-20 18:00", ""),
-    topic("Crowbar vs Wonly", "撬棍测试", "s4", "Jay", "2026-07", "可发布", "KR5 测试内容破圈", ["shorts-core", "data-thread"], ["撬棍近景", "门体受力慢动作", "测试前后对比"], "前 2 秒直接撬门；5 秒前隐藏结果；主体展示抗破坏过程；置顶评论：Which tool should we test next?", "2026-07-27 09:00", "2026-07-28 18:00", ""),
-    topic("Axe vs Door", "斧头冲击", "s4", "Jay", "2026-07", "待分镜", "KR5 测试内容破圈", ["shorts-core"], ["斧头冲击特写", "慢动作碎屑", "门体结果定格"], "标准版讲清测试条件；极速版只保留冲击和结果，测试完播率差异。", "2026-07-29 10:00", "2026-07-31 18:00", ""),
-    topic("Tools vs Wonly Door", "撬棍 + 斧头 + 电钻合集", "s4", "Jay", "2026-09", "脚本待定", "KR5 测试内容破圈", ["b2b-proof"], ["前三集测试素材", "工具参数卡", "结论对比表"], "把 3 个工具测试合成 6 分钟 YouTube 长视频，加入测试条件、结果和购买信任点。", "2026-09-21 10:00", "2026-09-25 18:00", ""),
-  ],
-  okrs: [
-    monthlyOkr("2026-07", "Mia", "建立 Wonly 专业信任内容基础", [["完成专业信任主题", 2, 1, "个"], ["LinkedIn 技术向发布", 2, 0, "条"], ["专业内容平均互动率", 5, 0, "%"]]),
-    monthlyOkr("2026-07", "Leo", "提升短视频剪辑效率与完播表现", [["完成短视频剪辑", 4, 1, "条"], ["平均完播率", 40, 0, "%"], ["跨平台复用率", 80, 30, "%"]]),
-    monthlyOkr("2026-07", "Anna", "验证女性生活场景内容转化", [["完成生活方式主题", 3, 2, "个"], ["Instagram 发布", 5, 0, "条"], ["互动率", 6, 0, "%"]]),
-    monthlyOkr("2026-07", "Chris", "扩大工厂实力和 B2B 背书曝光", [["完成工厂主题", 2, 2, "个"], ["LinkedIn B2B 内容", 2, 0, "条"], ["询盘线索", 5, 0, "个"]]),
-    monthlyOkr("2026-07", "Jay", "打造测试内容破圈记忆点", [["完成破坏测试主题", 2, 2, "个"], ["短视频播放量", 50000, 0, "次"], ["评论互动", 300, 0, "条"]]),
-    monthlyOkr("2026-08", "Mia", "把专业信任内容沉淀成系列资产", [["技术解释内容", 3, 0, "条"], ["资料卡复用", 4, 0, "张"], ["收藏率", 3, 0, "%"]]),
-    monthlyOkr("2026-08", "Anna", "继续测试女性安全感场景", [["夜间归家主题", 2, 1, "个"], ["Reels 发布", 4, 0, "条"], ["互动率", 6, 0, "%"]]),
-    monthlyOkr("2026-08", "Chris", "完成工厂制造流程内容", [["制造流程主题", 2, 1, "个"], ["B2B 播放量", 30000, 0, "次"], ["询盘线索", 6, 0, "个"]]),
-    monthlyOkr("2026-09", "Jay", "完成暴力测试合集转化", [["YouTube 长视频", 1, 0, "条"], ["合集播放量", 80000, 0, "次"], ["评论互动", 500, 0, "条"]]),
-  ],
+  topics: [],
+  okrs: [],
 };
 
 let data = loadData();
 let activeMonth = data.activeMonth;
 let activeSeries = "all";
+let currentAccount = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -76,7 +64,10 @@ function clone(value) {
 
 function loadData() {
   try {
-    return { ...clone(defaultData), ...JSON.parse(localStorage.getItem(DATA_KEY) || "{}") };
+    const saved = JSON.parse(localStorage.getItem(DATA_KEY) || "{}");
+    const next = { ...clone(defaultData), ...saved };
+    next.accounts = Array.isArray(next.accounts) && next.accounts.length ? next.accounts : clone(defaultData.accounts);
+    return next;
   } catch {
     return clone(defaultData);
   }
@@ -99,6 +90,10 @@ function getOwner(name) {
   return data.owners.find((item) => item.name === name);
 }
 
+function getAccount(id) {
+  return data.accounts.find((item) => item.id === id);
+}
+
 function topicPlatforms(item) {
   return item.bundles.flatMap((id) => getBundle(id)?.platforms ?? []);
 }
@@ -117,6 +112,7 @@ async function sha256(text) {
 function showApp() {
   $("#loginScreen").hidden = true;
   $("#appShell").hidden = false;
+  renderCurrentAccount();
 }
 
 function showLogin() {
@@ -129,13 +125,28 @@ async function handleLogin(event) {
   event.preventDefault();
   const username = $("#usernameInput").value.trim();
   const passwordHash = await sha256($("#passwordInput").value);
-  if (username === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
-    sessionStorage.setItem(SESSION_KEY, "1");
+  const account = data.accounts.find((item) => item.username === username && item.status !== "停用");
+  const fallbackAdmin = username === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH;
+  if ((account && account.passwordHash === passwordHash) || fallbackAdmin) {
+    currentAccount = account ?? defaultData.accounts[0];
+    sessionStorage.setItem(SESSION_KEY, currentAccount.username);
     $("#loginError").textContent = "";
     showApp();
   } else {
     $("#loginError").textContent = "用户名或密码不正确";
   }
+}
+
+function restoreSession() {
+  const username = sessionStorage.getItem(SESSION_KEY);
+  currentAccount = data.accounts.find((item) => item.username === username) ?? null;
+  return Boolean(currentAccount);
+}
+
+function renderCurrentAccount() {
+  const account = currentAccount ?? data.accounts.find((item) => item.username === ADMIN_USERNAME);
+  if (!account) return;
+  $("#currentAccountPill").textContent = `${ROLE_LABELS[account.role] ?? account.role} · ${account.username}`;
 }
 
 function renderAll() {
@@ -228,6 +239,10 @@ function renderCalendar() {
   const rows = data.topics
     .filter((item) => (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth)
     .sort((a, b) => a.publish.localeCompare(b.publish));
+  if (!rows.length) {
+    $("#calendarBoard").innerHTML = `<div class="empty-state">还没有内容规划。点击右上角“新建内容”或到设置里新增帖子主题。</div>`;
+    return;
+  }
   $("#calendarBoard").innerHTML = rows.map((item) => {
     const series = getSeries(item.seriesId);
     return `
@@ -252,7 +267,7 @@ function renderContentTable(keyword = "") {
     const searchable = [item.title, item.subtitle, item.owner, item.status, item.okrKey, item.postUrl, topicPlatforms(item).join(" ")].join(" ").toLowerCase();
     return searchable.includes(lower);
   });
-  $("#contentRows").innerHTML = rows.map((item) => `
+  $("#contentRows").innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td class="content-title"><strong>${item.title}</strong><span>${getSeries(item.seriesId)?.name ?? ""} · ${item.subtitle}</span></td>
       <td>${[...new Set(topicPlatforms(item))].join(" / ")}</td>
@@ -262,7 +277,7 @@ function renderContentTable(keyword = "") {
       <td>${item.postUrl ? `<a href="${item.postUrl}" target="_blank" rel="noreferrer">${platformFromUrl(item.postUrl)}</a>` : "未上传"}</td>
       <td><button class="ghost-button table-action" data-edit-topic="${item.id}">编辑</button></td>
     </tr>
-  `).join("");
+  `).join("") : `<tr><td colspan="7" class="empty-table">还没有帖子主题，可以从“新建内容”开始手动添加。</td></tr>`;
 }
 
 function okrScore(okr) {
@@ -281,6 +296,10 @@ function renderOkrMonths() {
 function renderOkr() {
   const monthOkrs = data.okrs.filter((item) => item.month === activeMonth);
   const monthTopics = data.topics.filter((item) => item.month === activeMonth);
+  if (!monthOkrs.length) {
+    $("#okrGrid").innerHTML = `<div class="empty-state">还没有月度 OKR。到设置里新增月度 OKR 后，这里会自动计算成员完成率。</div>`;
+    return;
+  }
   $("#okrGrid").innerHTML = monthOkrs.map((okr) => {
     const score = okrScore(okr);
     const ownerTopics = monthTopics.filter((item) => item.owner === okr.owner);
@@ -373,6 +392,7 @@ function renderSystemEditor() {
       <button class="ghost-button" data-new-topic="1">新增帖子主题</button>
       <button class="ghost-button" data-new-okr="1">新增月度 OKR</button>
       <button class="ghost-button" data-new-owner="1">新增成员</button>
+      <button class="ghost-button" data-new-account="1">新增账号</button>
       <button class="ghost-button" data-new-series="1">新增系列</button>
       <button class="ghost-button" data-new-bundle="1">新增平台组合</button>
       <button class="ghost-button" data-export-data="1">导出全部数据</button>
@@ -383,6 +403,7 @@ function renderSystemEditor() {
       <section><h4>系列</h4>${data.series.map((item) => `<button data-edit-series="${item.id}">${item.code} · ${item.name}</button>`).join("")}</section>
       <section><h4>平台组合</h4>${data.platformBundles.map((item) => `<button data-edit-bundle="${item.id}">${item.name}</button>`).join("")}</section>
       <section><h4>成员</h4>${data.owners.map((item) => `<button data-edit-owner="${item.name}">${item.name} · ${item.title}</button>`).join("")}</section>
+      <section class="wide-list"><h4>账号与角色</h4>${data.accounts.map((item) => `<button data-edit-account="${item.id}">${item.username} · ${ROLE_LABELS[item.role] ?? item.role} · ${item.owner || "未绑定成员"} · ${item.status}</button>`).join("")}</section>
     </div>
   `;
 }
@@ -567,6 +588,64 @@ function openOwnerEditor(name) {
   });
 }
 
+async function openAccountEditor(id) {
+  const item = getAccount(id) ?? { id: "", username: "", owner: data.owners[0]?.name ?? "", role: "editor", passwordHash: "", status: "启用" };
+  openEditor({
+    scope: "账号与角色",
+    title: item.id ? `编辑账号：${item.username}` : "新增团队账号",
+    hint: "账号可绑定到团队成员，并分配管理员、运营主管、内容编辑或只读成员角色。新账号必须设置密码，编辑时密码留空则保持不变。",
+    fields: [
+      textField("username", "登录账号", item.username),
+      selectField("owner", "绑定成员", item.owner, data.owners.map((owner) => [owner.name, `${owner.name} · ${owner.title}`])),
+      selectField("role", "角色", item.role, Object.entries(ROLE_LABELS)),
+      selectField("status", "状态", item.status, ["启用", "停用"].map((value) => [value, value])),
+      passwordField("password", item.id ? "新密码（留空不修改）" : "初始密码", ""),
+    ],
+    deleteLabel: item.id ? "删除账号" : "",
+    onDelete: item.id ? () => {
+      if (data.accounts.length <= 1) {
+        alert("至少保留一个账号。");
+        return;
+      }
+      data.accounts = data.accounts.filter((account) => account.id !== item.id);
+      if (currentAccount?.id === item.id) {
+        sessionStorage.removeItem(SESSION_KEY);
+        showLogin();
+      }
+      saveAndRefresh();
+    } : null,
+    async onSave(values) {
+      if (!values.username.trim()) {
+        alert("请填写登录账号。");
+        return false;
+      }
+      if (!item.id && !values.password) {
+        alert("新账号需要设置初始密码。");
+        return false;
+      }
+      const duplicate = data.accounts.some((account) => account.username === values.username.trim() && account.id !== item.id);
+      if (duplicate) {
+        alert("这个登录账号已经存在。");
+        return false;
+      }
+      const next = {
+        ...item,
+        id: item.id || idFrom(`acct-${values.username}-${Date.now()}`),
+        username: values.username.trim(),
+        owner: values.owner,
+        role: values.role,
+        status: values.status,
+        passwordHash: values.password ? await sha256(values.password) : item.passwordHash,
+      };
+      const index = data.accounts.findIndex((account) => account.id === item.id);
+      if (index >= 0) data.accounts[index] = next;
+      else data.accounts.push(next);
+      if (currentAccount?.id === next.id) currentAccount = next;
+      saveAndRefresh();
+    },
+  });
+}
+
 function openOkrEditor(id) {
   const exists = data.okrs.some((okr) => okr.id === id);
   const item = data.okrs.find((okr) => okr.id === id) ?? monthlyOkr(activeMonth, data.owners[0]?.name ?? "", "新的月度 Objective", [["关键结果", 1, 0, ""]]);
@@ -630,10 +709,11 @@ function openDataImportEditor() {
 }
 
 function validateImportedData(next) {
-  ["owners", "platformBundles", "series", "topics", "okrs"].forEach((key) => {
+  ["owners", "accounts", "platformBundles", "series", "topics", "okrs"].forEach((key) => {
     if (!Array.isArray(next[key])) throw new Error(`缺少 ${key} 列表`);
   });
   if (!next.owners.length) throw new Error("至少需要一个成员");
+  if (!next.accounts.length) throw new Error("至少需要一个账号");
   if (!next.series.length) throw new Error("至少需要一个系列");
   if (!next.platformBundles.length) throw new Error("至少需要一个平台组合");
 }
@@ -652,10 +732,10 @@ function openEditor(config) {
       <button class="primary-button" type="submit">保存修改</button>
     </div>
   `;
-  $("#editForm").onsubmit = (event) => {
+  $("#editForm").onsubmit = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget).entries());
-    const shouldClose = config.onSave(values);
+    const shouldClose = await config.onSave(values);
     if (shouldClose !== false) closeEditor();
   };
   if (config.onDelete) {
@@ -675,6 +755,10 @@ function textField(name, label, value = "") {
 
 function numberField(name, label, value = 0) {
   return `<label><span>${label}</span><input type="number" step="0.1" name="${name}" value="${escapeAttr(value)}" /></label>`;
+}
+
+function passwordField(name, label, value = "") {
+  return `<label><span>${label}</span><input type="password" name="${name}" value="${escapeAttr(value)}" autocomplete="new-password" /></label>`;
 }
 
 function monthField(name, label, value = activeMonth) {
@@ -737,6 +821,7 @@ function bindEvents() {
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#logoutButton").addEventListener("click", () => {
     sessionStorage.removeItem(SESSION_KEY);
+    currentAccount = null;
     showLogin();
   });
   $("#newTopicButton").addEventListener("click", () => openTopicEditor());
@@ -760,12 +845,13 @@ function bindEvents() {
     saveAndRefresh();
   });
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-okr],[data-new-owner],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
+    const target = event.target.closest("[data-edit-topic],[data-edit-series],[data-edit-bundle],[data-edit-owner],[data-edit-account],[data-edit-okr],[data-okr-month],[data-new-topic],[data-new-okr],[data-new-owner],[data-new-account],[data-new-series],[data-new-bundle],[data-export-data],[data-import-data],[data-reset-data]");
     if (!target) return;
     if (target.dataset.editTopic) openTopicEditor(target.dataset.editTopic);
     if (target.dataset.editSeries) openSeriesEditor(target.dataset.editSeries);
     if (target.dataset.editBundle) openBundleEditor(target.dataset.editBundle);
     if (target.dataset.editOwner) openOwnerEditor(target.dataset.editOwner);
+    if (target.dataset.editAccount) openAccountEditor(target.dataset.editAccount);
     if (target.dataset.editOkr) openOkrEditor(target.dataset.editOkr);
     if (target.dataset.okrMonth) {
       activeMonth = target.dataset.okrMonth;
@@ -774,6 +860,7 @@ function bindEvents() {
     if (target.dataset.newTopic) openTopicEditor();
     if (target.dataset.newOkr) openOkrEditor();
     if (target.dataset.newOwner) openOwnerEditor();
+    if (target.dataset.newAccount) openAccountEditor();
     if (target.dataset.newSeries) openSeriesEditor();
     if (target.dataset.newBundle) openBundleEditor();
     if (target.dataset.exportData) downloadJson();
@@ -797,7 +884,7 @@ function bindEvents() {
 function init() {
   renderAll();
   bindEvents();
-  if (sessionStorage.getItem(SESSION_KEY)) showApp();
+  if (restoreSession()) showApp();
   else showLogin();
 }
 
