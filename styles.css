@@ -1317,10 +1317,38 @@ select {
   background: #f7faff;
 }
 
+.okr-builder-head,
 .okr-objective-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
+}
+
+.okr-builder-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.okr-builder-head strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.okr-objective-builder,
+.okr-objective-block,
+.okr-objective-list {
+  display: grid;
+  gap: 14px;
+}
+
+.okr-objective-block {
+  padding: 12px;
+  border: 1px solid rgba(47, 100, 183, 0.18);
+  border-radius: 12px;
+  background: #eef4ff;
+}
+
+.okr-objective-card {
   align-items: start;
   padding: 14px;
   border: 1px solid var(--line);
@@ -1373,6 +1401,22 @@ select {
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #ffffff;
+}
+
+.okr-objective-summary {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.okr-objective-summary:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.okr-objective-summary p {
+  margin: 0;
 }
 
 .edit-actions {
@@ -1574,6 +1618,7 @@ code {
     grid-column: auto;
   }
 
+  .okr-builder-head,
   .okr-objective-card,
   .okr-kr-row {
     grid-template-columns: 1fr;

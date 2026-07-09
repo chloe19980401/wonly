@@ -472,9 +472,25 @@ function renderContentTable(keyword = "") {
 }
 
 function okrScore(okr) {
-  if (!okr.keyResults.length) return 0;
-  const total = okr.keyResults.reduce((sum, kr) => sum + Math.min(Number(kr.actual || 0) / Math.max(Number(kr.target || 1), 1), 1), 0);
-  return Math.round((total / okr.keyResults.length) * 100);
+  const keyResults = okrObjectives(okr).flatMap((objective) => objective.keyResults);
+  if (!keyResults.length) return 0;
+  const total = keyResults.reduce((sum, kr) => sum + Math.min(Number(kr.actual || 0) / Math.max(Number(kr.target || 1), 1), 1), 0);
+  return Math.round((total / keyResults.length) * 100);
+}
+
+function okrObjectives(okr) {
+  if (Array.isArray(okr.objectives) && okr.objectives.length) {
+    return okr.objectives.map((objective, index) => ({
+      id: objective.id || `o-${index + 1}`,
+      title: objective.title || objective.objective || "",
+      keyResults: Array.isArray(objective.keyResults) ? objective.keyResults : [],
+    }));
+  }
+  return [{
+    id: "o-1",
+    title: okr.objective || "",
+    keyResults: Array.isArray(okr.keyResults) ? okr.keyResults : [],
+  }];
 }
 
 function renderOkrMonths() {
@@ -494,17 +510,24 @@ function renderOkr() {
   $("#okrGrid").innerHTML = monthOkrs.map((okr) => {
     const score = okrScore(okr);
     const ownerTopics = monthTopics.filter((item) => item.owner === okr.owner);
+    const objectives = okrObjectives(okr);
     return `
       <article class="okr-card">
         <div class="okr-head">
           <div><h3>${okr.owner}</h3><span>${getOwner(okr.owner)?.title ?? "成员"}</span></div>
           <strong>${score}%</strong>
         </div>
-        <p><b>O：</b>${okr.objective}</p>
-        <div class="okr-bar"><i style="width:${score}%"></i></div>
-        <div class="kr-list">
-          ${okr.keyResults.map((kr) => `<div><span>${kr.name}</span><strong>${kr.actual}/${kr.target}${kr.unit}</strong></div>`).join("")}
+        <div class="okr-objective-list">
+          ${objectives.map((objective, objectiveIndex) => `
+            <div class="okr-objective-summary">
+              <p><b>O${objectiveIndex + 1}：</b>${objective.title || "未填写 Objective"}</p>
+              <div class="kr-list">
+                ${objective.keyResults.map((kr) => `<div><span>${kr.name}</span><strong>${kr.actual}/${kr.target}${kr.unit}</strong></div>`).join("")}
+              </div>
+            </div>
+          `).join("")}
         </div>
+        <div class="okr-bar"><i style="width:${score}%"></i></div>
         <div class="okr-stats">
           <span>本月主题 ${ownerTopics.length}</span>
           <span>已传链接 ${ownerTopics.filter((item) => item.postUrl).length}</span>
@@ -933,14 +956,34 @@ function openOkrEditor(id) {
       okrStructureField(item),
     ],
     onMount() {
-      const list = $("#okrKrList");
-      $("#addKrButton").onclick = () => {
-        list.insertAdjacentHTML("beforeend", okrKeyResultRow({ name: "", target: 0, actual: 0, unit: "" }, list.children.length));
+      const builder = $("#okrBuilder");
+      $("#addObjectiveButton").onclick = () => {
+        builder.insertAdjacentHTML("beforeend", okrObjectiveBlock({ title: "", keyResults: [{ name: "", target: 0, actual: 0, unit: "" }] }, builder.children.length));
+        reindexOkrEditor();
       };
-      list.onclick = (event) => {
+      builder.onclick = (event) => {
+        const addKrButton = event.target.closest("[data-add-kr]");
+        if (addKrButton) {
+          const block = addKrButton.closest(".okr-objective-block");
+          const list = block.querySelector(".okr-kr-list");
+          list.insertAdjacentHTML("beforeend", okrKeyResultRow({ name: "", target: 0, actual: 0, unit: "" }, list.children.length));
+          reindexOkrEditor();
+          return;
+        }
         const removeButton = event.target.closest("[data-remove-kr]");
-        if (!removeButton || list.children.length <= 1) return;
-        removeButton.closest(".okr-kr-row").remove();
+        if (removeButton) {
+          const list = removeButton.closest(".okr-kr-list");
+          if (list.children.length <= 1) return;
+          removeButton.closest(".okr-kr-row").remove();
+          reindexOkrEditor();
+          return;
+        }
+        const removeObjectiveButton = event.target.closest("[data-remove-objective]");
+        if (removeObjectiveButton) {
+          if (builder.children.length <= 1) return;
+          removeObjectiveButton.closest(".okr-objective-block").remove();
+          reindexOkrEditor();
+        }
       };
     },
     deleteLabel: exists ? "删除月度 OKR" : "",
@@ -949,29 +992,22 @@ function openOkrEditor(id) {
       saveAndRefresh();
     } : null,
     onSave(values) {
-      const krNames = arrayValue(values.krName);
-      const krTargets = arrayValue(values.krTarget);
-      const krActuals = arrayValue(values.krActual);
-      const krUnits = arrayValue(values.krUnit);
-      const keyResults = krNames.map((name, index) => ({
-        name: String(name ?? "").trim(),
-        target: Number(krTargets[index] || 0),
-        actual: Number(krActuals[index] || 0),
-        unit: String(krUnits[index] ?? "").trim(),
-      })).filter((kr) => kr.name);
-      if (!values.objective.trim()) {
-        alert("请填写 Objective。");
+      const objectives = collectOkrObjectivesFromEditor();
+      if (!objectives.length) {
+        alert("请至少填写一个 Objective。");
         return false;
       }
-      if (!keyResults.length) {
-        alert("请至少填写一个 Key Result。");
+      if (objectives.some((objective) => !objective.keyResults.length)) {
+        alert("每个 Objective 至少需要一个 Key Result。");
         return false;
       }
+      const keyResults = objectives.flatMap((objective) => objective.keyResults);
       const next = {
         ...item,
         month: values.month,
         owner: values.owner,
-        objective: values.objective.trim(),
+        objective: objectives[0].title,
+        objectives,
         id: item.id || idFrom(`${values.month}-${values.owner}-${Date.now()}`),
         keyResults,
       };
@@ -1092,31 +1128,50 @@ function selectField(name, label, value, options) {
 }
 
 function okrStructureField(item) {
-  const keyResults = item.keyResults?.length ? item.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }];
+  const objectives = okrObjectives(item).map((objective) => ({
+    title: objective.title,
+    keyResults: objective.keyResults.length ? objective.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }],
+  }));
   return `
     <section class="okr-builder wide">
+      <div class="okr-builder-head">
+        <strong>Objectives</strong>
+        <button class="ghost-button" type="button" id="addObjectiveButton">＋ 添加 Objective</button>
+      </div>
+      <div class="okr-objective-builder" id="okrBuilder">
+        ${objectives.map((objective, index) => okrObjectiveBlock(objective, index)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function okrObjectiveBlock(objective, index) {
+  const keyResults = objective.keyResults?.length ? objective.keyResults : [{ name: "", target: 0, actual: 0, unit: "" }];
+  return `
+    <div class="okr-objective-block">
       <div class="okr-objective-card">
-        <span class="okr-index">O1</span>
+        <span class="okr-index" data-objective-index>O${index + 1}</span>
         <label>
           <span>Objective</span>
-          <textarea name="objective" placeholder="添加 Objective：目标要与团队方向对齐，避免含糊描述">${escapeHtml(item.objective || "")}</textarea>
+          <textarea name="objectiveTitle" placeholder="添加 Objective：目标要与团队方向对齐，避免含糊描述">${escapeHtml(objective.title || "")}</textarea>
         </label>
+        <button class="icon-button" type="button" data-remove-objective title="删除 Objective" aria-label="删除 Objective">×</button>
       </div>
       <div class="okr-kr-header">
         <strong>Key Results</strong>
-        <button class="ghost-button" type="button" id="addKrButton">＋ 添加 Key Result</button>
+        <button class="ghost-button" type="button" data-add-kr>＋ 添加 Key Result</button>
       </div>
-      <div class="okr-kr-list" id="okrKrList">
-        ${keyResults.map((kr, index) => okrKeyResultRow(kr, index)).join("")}
+      <div class="okr-kr-list">
+        ${keyResults.map((kr, krIndex) => okrKeyResultRow(kr, krIndex)).join("")}
       </div>
-    </section>
+    </div>
   `;
 }
 
 function okrKeyResultRow(kr, index) {
   return `
     <div class="okr-kr-row">
-      <span class="okr-index">KR${index + 1}</span>
+      <span class="okr-index" data-kr-index>KR${index + 1}</span>
       <input name="krName" value="${escapeAttr(kr.name || "")}" placeholder="添加 Key Result" />
       <input type="number" step="0.1" min="0" name="krTarget" value="${escapeAttr(kr.target ?? 0)}" placeholder="目标" />
       <input type="number" step="0.1" min="0" name="krActual" value="${escapeAttr(kr.actual ?? 0)}" placeholder="实际" />
@@ -1124,6 +1179,28 @@ function okrKeyResultRow(kr, index) {
       <button class="icon-button" type="button" data-remove-kr title="删除 KR" aria-label="删除 KR">×</button>
     </div>
   `;
+}
+
+function reindexOkrEditor() {
+  $$("#okrBuilder .okr-objective-block").forEach((block, objectiveIndex) => {
+    block.querySelector("[data-objective-index]").textContent = `O${objectiveIndex + 1}`;
+    block.querySelectorAll("[data-kr-index]").forEach((label, krIndex) => {
+      label.textContent = `KR${krIndex + 1}`;
+    });
+  });
+}
+
+function collectOkrObjectivesFromEditor() {
+  return $$("#okrBuilder .okr-objective-block").map((block, objectiveIndex) => {
+    const title = block.querySelector('[name="objectiveTitle"]').value.trim();
+    const keyResults = Array.from(block.querySelectorAll(".okr-kr-row")).map((row) => ({
+      name: row.querySelector('[name="krName"]').value.trim(),
+      target: Number(row.querySelector('[name="krTarget"]').value || 0),
+      actual: Number(row.querySelector('[name="krActual"]').value || 0),
+      unit: row.querySelector('[name="krUnit"]').value.trim(),
+    })).filter((kr) => kr.name);
+    return { id: `o-${objectiveIndex + 1}`, title, keyResults };
+  }).filter((objective) => objective.title);
 }
 
 function escapeHtml(value) {
