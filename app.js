@@ -1,13 +1,17 @@
 const ADMIN_USERNAME = "chloelee";
 const ADMIN_PASSWORD_HASH = "df3dcfc0245fb6d3f508523001b0979446249420e3dc4b0081785035fc90a998";
+const DESIGNER_USERNAME = "zhaolin";
+const DESIGNER_PASSWORD_HASH = "2b57de2d606b54b194dc7fbfdbb31a013cae5363e0116998f21ec6c74b9b5e7a";
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
-const TEAM_OKR_VERSION = "2026-07-team-okr-v1";
+const TEAM_OKR_VERSION = "2026-07-team-okr-v2";
+const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v1";
 
 const ROLE_LABELS = {
   admin: "管理员",
   manager: "运营主管",
   marketing: "市场部运营",
+  designer: "设计师",
   editor: "内容编辑",
   viewer: "只读成员",
 };
@@ -32,13 +36,22 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   marketing: {
-    views: ["overview", "calendar", "library", "analytics", "design"],
-    topicScope: "all",
+    views: ["overview", "calendar", "library", "okr", "analytics", "design"],
+    topicScope: "own",
     canCreateTopic: true,
     canManageOkr: false,
     canManageSystem: false,
     canEditData: true,
     canExport: true,
+  },
+  designer: {
+    views: ["design"],
+    topicScope: "own",
+    canCreateTopic: false,
+    canManageOkr: false,
+    canManageSystem: false,
+    canEditData: false,
+    canExport: false,
   },
   editor: {
     views: ["calendar", "library"],
@@ -70,6 +83,8 @@ const REAL_OWNER_NAMES = new Set(REAL_OWNERS.map((owner) => owner.name));
 const LEGACY_OWNER_NAMES = new Set(["Mia", "Leo", "Anna", "Chris", "Jay"]);
 const FALLBACK_OWNER = REAL_OWNERS[0].name;
 const DESIGNERS = [{ name: "赵琳", title: "协助设计师" }];
+const ACCOUNT_PEOPLE = [...REAL_OWNERS, ...DESIGNERS];
+const ACCOUNT_PERSON_NAMES = new Set(ACCOUNT_PEOPLE.map((person) => person.name));
 const CONTENT_TYPES = ["视频", "图文"];
 const PUBLISH_PLATFORMS = ["YouTube", "TikTok", "Instagram", "Facebook", "LinkedIn"];
 const SERIES_MONTH_OPTIONS = ["2026-07", "2026-08", "2026-09"];
@@ -84,57 +99,125 @@ const JULY_TEAM_OKRS = [
     id: "2026-07-徐一诺-图文okr",
     month: "2026-07",
     owner: "徐一诺",
-    objective: "建立 7 月图文内容稳定产出节奏，用工厂证据和客户痛点降低海外客户理解成本。",
-    objectives: [{
-      id: "o-1",
-      title: "建立 7 月图文内容稳定产出节奏，用工厂证据和客户痛点降低海外客户理解成本。",
-      keyResults: [
-        { name: "7 月累计完成 20 条图文帖子，按照每周 5 条的频率发布。" },
-        { name: "每条图文都写清楚客户痛点、画面内容、核心卖点和 CTA。" },
-        { name: "所有图文设计需求都绑定协助设计师赵琳，并提前进入赵琳设计排期表。" },
-        { name: "每周五完成下周 5 条图文方案，明确每条图文放什么内容、用什么视觉和解决什么痛点。" },
-      ],
-    }],
+    objective: "完成 7 月图文内容产出",
+    objectives: [
+      {
+        id: "o-1",
+        title: "完成 7 月图文内容产出",
+        keyResults: [
+          { name: "完成 20 条图文" },
+          { name: "每周发布 5 条" },
+          { name: "提交 20 条设计需求" },
+          { name: "完成 4 次周五规划" },
+        ],
+      },
+      {
+        id: "o-2",
+        title: "完成工厂证据图文矩阵",
+        keyResults: [
+          { name: "生产流程 5 条" },
+          { name: "质量检测 5 条" },
+          { name: "交付包装 5 条" },
+          { name: "客户痛点 5 条" },
+        ],
+      },
+      {
+        id: "o-3",
+        title: "达成 7 月图文效果指标",
+        keyResults: [
+          { name: "曝光 6000+" },
+          { name: "互动率 3%+" },
+          { name: "询盘线索 5+" },
+          { name: "学习分享 1 次" },
+        ],
+      },
+    ],
   },
   {
     id: "2026-07-周雨晴-印尼视频okr",
     month: "2026-07",
     owner: "周雨晴",
-    objective: "完成印尼市场视频内容验证，用家庭安全、暖色本地化和电商信任点建立询盘基础。",
-    objectives: [{
-      id: "o-1",
-      title: "完成印尼市场视频内容验证，用家庭安全、暖色本地化和电商信任点建立询盘基础。",
-      keyResults: [
-        { name: "7 月累计完成 12 条印尼视频帖子，按照每周 3 条的频率发布。" },
-        { name: "每条视频都包含印尼客户痛点、拍摄画面、脚本重点和平台发布方向。" },
-        { name: "不安排协助设计师，视频素材、字幕和发布物料由负责人自行整理。" },
-        { name: "每周五完成下周 3 条印尼视频拍摄方案，明确怎么拍、拍哪些工厂证据和解决什么顾虑。" },
-      ],
-    }],
+    objective: "完成 7 月印尼视频产出",
+    objectives: [
+      {
+        id: "o-1",
+        title: "完成 7 月印尼视频产出",
+        keyResults: [
+          { name: "完成 12 条视频" },
+          { name: "每周发布 3 条" },
+          { name: "完成 12 条脚本" },
+          { name: "完成 4 次周五规划" },
+        ],
+      },
+      {
+        id: "o-2",
+        title: "完成印尼本地化内容矩阵",
+        keyResults: [
+          { name: "家庭安全 4 条" },
+          { name: "暖色家居 3 条" },
+          { name: "防潮耐用 3 条" },
+          { name: "家庭价值 2 条" },
+        ],
+      },
+      {
+        id: "o-3",
+        title: "达成 7 月印尼视频效果指标",
+        keyResults: [
+          { name: "播放 12000+" },
+          { name: "完播率 25%+" },
+          { name: "询盘线索 6+" },
+          { name: "学习分享 1 次" },
+        ],
+      },
+    ],
   },
   {
     id: "2026-07-周宗莉-越南视频okr",
     month: "2026-07",
     owner: "周宗莉",
-    objective: "完成越南市场视频内容验证，用 Tet 审美、Facebook/TikTok 场景和工厂可靠性建立品牌直达感。",
-    objectives: [{
-      id: "o-1",
-      title: "完成越南市场视频内容验证，用 Tet 审美、Facebook/TikTok 场景和工厂可靠性建立品牌直达感。",
-      keyResults: [
-        { name: "7 月累计完成 12 条越南视频帖子，按照每周 3 条的频率发布。" },
-        { name: "每条视频都包含越南客户痛点、拍摄画面、脚本重点和平台发布方向。" },
-        { name: "不安排协助设计师，视频素材、字幕和发布物料由负责人自行整理。" },
-        { name: "每周五完成下周 3 条越南视频拍摄方案，明确怎么拍、拍哪些工厂证据和解决什么顾虑。" },
-      ],
-    }],
+    objective: "完成 7 月越南视频产出",
+    objectives: [
+      {
+        id: "o-1",
+        title: "完成 7 月越南视频产出",
+        keyResults: [
+          { name: "完成 12 条视频" },
+          { name: "每周发布 3 条" },
+          { name: "完成 12 条脚本" },
+          { name: "完成 4 次周五规划" },
+        ],
+      },
+      {
+        id: "o-2",
+        title: "完成越南本地化内容矩阵",
+        keyResults: [
+          { name: "Tet 视觉 4 条" },
+          { name: "生产过程 3 条" },
+          { name: "质量检测 3 条" },
+          { name: "经销商信任 2 条" },
+        ],
+      },
+      {
+        id: "o-3",
+        title: "达成 7 月越南视频效果指标",
+        keyResults: [
+          { name: "播放 12000+" },
+          { name: "完播率 25%+" },
+          { name: "询盘线索 6+" },
+          { name: "学习分享 1 次" },
+        ],
+      },
+    ],
   },
 ].map((okr) => ({ ...okr, keyResults: okr.objectives.flatMap((objective) => objective.keyResults) }));
+const SUPER_FACTORY_TOPICS = buildSuperFactoryTopics();
 
 const defaultData = {
   activeMonth: "2026-07",
   owners: clone(REAL_OWNERS),
   accounts: [
     { id: "acct-admin", username: ADMIN_USERNAME, owner: FALLBACK_OWNER, role: "admin", passwordHash: ADMIN_PASSWORD_HASH, status: "启用" },
+    { id: "acct-zhaolin", username: DESIGNER_USERNAME, owner: "赵琳", role: "designer", passwordHash: DESIGNER_PASSWORD_HASH, status: "启用" },
   ],
   platformBundles: [
     { id: "shorts-core", name: "短视频通用包", platforms: ["YouTube Shorts", "TikTok", "Instagram Reels"], format: "9:16 竖屏，15-45s，英文字幕", usage: "同一条核心视频适配三端，统一 Hook 和 CTA，只微调封面与标题。" },
@@ -165,6 +248,122 @@ const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 function topic(title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl) {
   return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, platforms: [], contentType: "视频", referenceType: "图片", designer: "" };
+}
+
+function buildSuperFactoryTopics() {
+  const shortVideos = [
+    ["Inside the Door Factory", "通用", "胡译泰", "痛点：海外客户怕供应商不是真工厂。拍生产线、设备、工序流转。"],
+    ["How a Security Door Is Made", "通用", "胡译泰", "痛点：客户不知道质量差异来自哪里。拍钢板到成品流程。"],
+    ["Steel Thickness Test", "通用", "胡译泰", "痛点：采购怕低价门偷工减料。拍卡尺和切面。"],
+    ["Lock Body Assembly Close-Up", "通用", "胡译泰", "痛点：客户担心核心锁体不稳定。拍装配细节。"],
+    ["Anti-Rust Coating Process", "通用", "胡译泰", "痛点：客户怕潮湿、高温、风沙导致生锈掉漆。拍喷涂和防锈工艺。"],
+    ["Heat and Sand Resistance Check", "Saudi", "胡译泰", "痛点：沙特客户担心高温风沙。拍耐热耐沙测试。"],
+    ["Humidity Resistance for ASEAN Homes", "Indonesia", "周雨晴", "痛点：印尼雨季湿度高。拍防潮、门体稳定和锁具表现。"],
+    ["Door Opening and Closing Cycle Test", "通用", "胡译泰", "痛点：工程商担心频繁使用后松动。拍连续开合测试。"],
+    ["Factory Quality Inspection Steps", "通用", "胡译泰", "痛点：客户怕到货才发现问题。拍出厂质检清单。"],
+    ["Why Cheap Doors Cost More Later", "通用", "胡译泰", "痛点：采购只看报价。拍低价门和标准门长期成本对比。"],
+    ["Real Packing for Export Orders", "通用", "胡译泰", "痛点：海外客户怕运输损坏。拍木箱、护角、防潮包装。"],
+    ["Container Loading Day", "通用", "胡译泰", "痛点：客户关心真实出口和交付能力。拍装柜封柜。"],
+    ["From Factory to Your Project Site", "通用", "胡译泰", "痛点：海外项目怕跨国交付不可控。拍交付链路。"],
+    ["Custom Size Door Production", "通用", "胡译泰", "痛点：工程项目有非标尺寸。拍定制尺寸生产。"],
+    ["Color Matching for Local Markets", "通用", "徐一诺", "痛点：不同国家审美不同。拍颜色、纹理和本地化应用。"],
+    ["Premium Black and Gold Door Finish", "Saudi", "胡译泰", "痛点：沙特高端项目要豪宅质感。拍黑金表面细节。"],
+    ["Warm Family Door Design", "Indonesia", "周雨晴", "痛点：印尼重视家庭安全感。拍暖色家居场景。"],
+    ["Tet-Ready Smart Home Entrance", "Vietnam", "周宗莉", "痛点：越南 Tet 有焕新需求。拍红金入户门场景。"],
+    ["No Face Factory Marketing Works", "通用", "胡译泰", "痛点：老板不想出镜但客户要证据。拍不出镜工厂证据链。"],
+    ["Four Proofs Buyers Need", "通用", "胡译泰", "痛点：B 端客户要验证风险。拍能力、过程、结果、第三方证据。"],
+    ["Can You Deliver on Time?", "通用", "胡译泰", "痛点：工程客户怕延误。拍排产、仓库和装柜。"],
+    ["What Happens Before Shipment", "通用", "胡译泰", "痛点：客户怕发错货、漏配件。拍清点和拍照留档。"],
+    ["Door Hardware Compatibility Check", "通用", "胡译泰", "痛点：客户怕安装返工。拍锁、铰链、门框匹配。"],
+    ["Fire Safety Door Details", "通用", "胡译泰", "痛点：工程项目需要消防安全信任。拍防火结构。"],
+    ["Why Door Frames Matter", "通用", "胡译泰", "痛点：客户只看门扇忽略门框。拍门框结构。"],
+    ["Smart Lock Installation Demo", "通用", "胡译泰", "痛点：经销商担心安装复杂。拍安装步骤。"],
+    ["One Door, Three Buyer Concerns", "通用", "胡译泰", "痛点：采购、技术、老板关注不同。拍三类顾虑对应证据。"],
+    ["Buyer’s Checklist Before Ordering Doors", "通用", "胡译泰", "痛点：客户不会判断供应商。拍采购检查清单。"],
+    ["Factory Test vs. Sales Promise", "通用", "胡译泰", "痛点：客户不信广告词。拍实测替代口头承诺。"],
+    ["Why We Show the Process", "通用", "胡译泰", "痛点：海外客户无法到厂。拍透明生产过程。"],
+    ["Door Surface Scratch Check", "通用", "胡译泰", "痛点：客户怕表面易刮花。拍耐刮检查。"],
+    ["Noise Reduction Door Demo", "通用", "胡译泰", "痛点：酒店、公寓关心体验。拍关门声和隔音体验。"],
+    ["Safe Entrance for Apartments", "Vietnam", "周宗莉", "痛点：越南城市公寓增长。拍公寓入户门方案。"],
+    ["Villa Entrance Door Ideas", "Saudi", "胡译泰", "痛点：高端别墅要安全和豪华感。拍别墅门款。"],
+    ["Hotel Project Door Solution", "通用", "胡译泰", "痛点：酒店项目怕批量不稳定。拍工程门型和批量交付。"],
+    ["Distributor Support from Factory", "通用", "胡译泰", "痛点：经销商怕卖后无支持。拍样册、培训、售后。"],
+    ["How We Reduce After-Sales Problems", "通用", "胡译泰", "痛点：经销商怕投诉。拍质检和安装标准。"],
+    ["Arabic / Bahasa / Vietnamese Ready", "通用", "胡译泰", "痛点：本地化材料影响转化。拍多语言说明和包装。"],
+    ["Door Security Test in 15 Seconds", "通用", "胡译泰", "痛点：客户要直观看到安全。拍防撬、防撞、锁点。"],
+    ["From Parameter to Buyer Pain", "通用", "胡译泰", "痛点：客户听不懂参数。拍参数如何转成客户处境。"],
+  ];
+  const longVideos = [
+    ["Complete Factory Tour: How WONLY Doors Are Made", "通用", "胡译泰", "痛点：海外客户无法到厂。拍完整远程验厂内容。"],
+    ["How to Choose a Reliable Security Door Supplier", "通用", "胡译泰", "痛点：采购怕选错供应商。讲产能、质检、包装、交期。"],
+    ["Security Door Testing Explained", "通用", "胡译泰", "痛点：客户不懂测试参数。讲防撬、耐用、防锈和表面测试。"],
+    ["Vietnam Market Door Design and Marketing Ideas", "Vietnam", "周宗莉", "痛点：越南需要 Tet 视觉和平台打法。讲红金、Facebook、TikTok。"],
+    ["Indonesia Family Security Door Strategy", "Indonesia", "周雨晴", "痛点：印尼重视家庭和宗教文化。讲暖色、家庭安全、电商信任。"],
+    ["Saudi Arabia Premium Door Market Strategy", "Saudi", "胡译泰", "痛点：沙特看重合规和高端感。讲黑金、SASO、IP65。"],
+    ["Cheap Door vs. Reliable Door: Total Cost Comparison", "通用", "胡译泰", "痛点：财务只看采购价。讲长期维护和返工成本。"],
+    ["What B2B Buyers Really Care About", "通用", "胡译泰", "痛点：B 端是组织决策。讲采购、技术、老板、财务。"],
+    ["Export Packing and Delivery Process for Door Projects", "通用", "胡译泰", "痛点：客户怕破损、漏件、延迟。讲出口包装和装柜流程。"],
+    ["How Factory Content Builds Trust Before Sales Calls", "通用", "胡译泰", "痛点：销售解释成本高。讲内容如何提前建立信任。"],
+  ];
+  const graphics = [
+    ["4 Proofs Every Door Buyer Needs", "图文", "痛点：客户缺可验证证据。做能力、过程、结果、第三方证据图。"],
+    ["Buyer Checklist for Security Doors", "图文", "痛点：客户不知道如何避坑。做采购检查清单。"],
+    ["Cheap Door Hidden Costs", "图文", "痛点：采购只比价格。做隐藏成本图解。"],
+    ["Vietnam Visual Guide: Red, Gold and Tet", "图文", "痛点：越南节庆视觉强。做 Tet 红金视觉指南。"],
+    ["Indonesia Visual Guide: Warm Family Security", "图文", "痛点：印尼需要家庭信任。做暖色家庭安全视觉指南。"],
+    ["Saudi Visual Guide: Premium Black and Gold", "图文", "痛点：沙特高端项目要高级感。做黑金视觉指南。"],
+    ["Door Factory Quality Flow", "图文", "痛点：客户看不见过程。做工厂质量流程图。"],
+    ["What Procurement Cares About", "图文", "痛点：采购需要转发理由。做采购关注点图。"],
+    ["What Engineers Care About", "图文", "痛点：技术部门要结构和参数。做工程师关注点图。"],
+    ["What Bosses Care About", "图文", "痛点：老板买低风险。做老板决策关注点图。"],
+    ["What Distributors Care About", "图文", "痛点：经销商怕售后压力。做经销商关注点图。"],
+    ["Door Export Packing Standard", "图文", "痛点：海外客户怕运输损坏。做包装标准图。"],
+    ["Humidity vs. Door Durability", "图文", "痛点：东南亚潮湿。做湿度和耐久图解。"],
+    ["Heat and Sand vs. Smart Locks", "图文", "痛点：沙特高温风沙。做环境适配图。"],
+    ["From Parameter to Buyer Pain", "图文", "痛点：客户听不懂参数。做参数到痛点转换图。"],
+    ["Why On-Time Delivery Matters", "图文", "痛点：项目怕延期。做交期影响图。"],
+    ["One Door, Six Decision Makers", "图文", "痛点：B 端多人决策。做六类决策人图。"],
+    ["Factory Content That Sells Before Sales", "图文", "痛点：销售解释成本高。做销转前置图。"],
+    ["Localized Door Content Matrix", "图文", "痛点：三个国家不能用同一套内容。做本地化矩阵。"],
+    ["Trust Signals for Overseas Buyers", "图文", "痛点：远程合作风险感强。做海外信任信号图。"],
+  ];
+  const items = [
+    ...shortVideos.map((item) => ({ title: item[0], market: item[1], owner: item[2], subtitle: item[3], contentType: "视频", platforms: ["TikTok", "Instagram", "YouTube"] })),
+    ...longVideos.map((item) => ({ title: item[0], market: item[1], owner: item[2], subtitle: item[3], contentType: "视频", platforms: ["YouTube", "LinkedIn", "Facebook"], long: true })),
+    ...graphics.map((item) => ({ title: item[0], market: item[1], owner: "徐一诺", subtitle: item[2], contentType: "图文", platforms: ["Instagram", "Facebook", "LinkedIn"], designer: "赵琳" })),
+  ];
+  return items.map((item, index) => {
+    const publish = dateFromJuly14(index + 2);
+    const shoot = dateFromJuly14(index);
+    return {
+      id: `sf-${idFrom(item.title)}`,
+      title: item.title,
+      subtitle: item.subtitle,
+      seriesId: "s3",
+      owner: item.owner,
+      month: publish.slice(0, 7),
+      status: "待分镜",
+      okrKey: item.contentType === "图文" ? "徐一诺 O2" : item.market === "Indonesia" ? "周雨晴 O2" : item.market === "Vietnam" ? "周宗莉 O2" : "超级工厂 O1",
+      bundles: item.contentType === "图文" ? ["visual-social", "data-thread"] : item.long ? ["b2b-proof", "data-thread"] : ["shorts-core", "b2b-proof"],
+      references: [],
+      script: `${item.subtitle}\n拍摄/制作：围绕「${item.title}」展示工厂证据、客户痛点和可验证细节。`,
+      shoot,
+      publish,
+      postUrl: "",
+      platforms: item.platforms,
+      contentType: item.contentType,
+      referenceType: item.contentType === "图文" ? "图片" : "视频",
+      designer: item.designer || "",
+      source: "super-factory-topic-import-v1",
+    };
+  });
+}
+
+function dateFromJuly14(offset) {
+  const date = new Date(2026, 6, 14 + offset);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 function monthlyOkr(month, owner, objective, keyResults) {
@@ -199,7 +398,7 @@ function normalizeData(next) {
   next.accounts = (Array.isArray(next.accounts) ? next.accounts : [])
     .filter((account) => account?.username)
     .map((account) => {
-      const owner = REAL_OWNER_NAMES.has(account.owner) ? account.owner : FALLBACK_OWNER;
+      const owner = ACCOUNT_PERSON_NAMES.has(account.owner) ? account.owner : FALLBACK_OWNER;
       const role = ROLE_PERMISSIONS[account.role] ? account.role : "viewer";
       const status = account.status === "停用" ? "停用" : "启用";
       if (owner !== account.owner || role !== account.role || status !== account.status) changed = true;
@@ -221,6 +420,23 @@ function normalizeData(next) {
     if (beforeAdmin !== JSON.stringify(next.accounts[adminIndex])) changed = true;
   } else {
     next.accounts.unshift(adminAccount);
+    changed = true;
+  }
+  const designerIndex = next.accounts.findIndex((account) => account.username === DESIGNER_USERNAME);
+  const designerAccount = {
+    id: designerIndex >= 0 ? next.accounts[designerIndex].id : "acct-zhaolin",
+    username: DESIGNER_USERNAME,
+    owner: "赵琳",
+    role: "designer",
+    passwordHash: designerIndex >= 0 ? (next.accounts[designerIndex].passwordHash || DESIGNER_PASSWORD_HASH) : DESIGNER_PASSWORD_HASH,
+    status: "启用",
+  };
+  if (designerIndex >= 0) {
+    const beforeDesigner = JSON.stringify(next.accounts[designerIndex]);
+    next.accounts[designerIndex] = { ...next.accounts[designerIndex], ...designerAccount };
+    if (beforeDesigner !== JSON.stringify(next.accounts[designerIndex])) changed = true;
+  } else {
+    next.accounts.push(designerAccount);
     changed = true;
   }
   if (!next.accounts.length) next.accounts = clone(defaultData.accounts);
@@ -262,6 +478,39 @@ function normalizeData(next) {
 
   if (!Array.isArray(next.designTasks)) {
     next.designTasks = [];
+    changed = true;
+  }
+  if (!next.migrations.includes(SUPER_FACTORY_TOPIC_VERSION)) {
+    const importSource = "super-factory-topic-import-v1";
+    const importedTopicIds = new Set(next.topics.filter((item) => item.source === importSource).map((item) => item.id));
+    next.topics = next.topics.filter((item) => item.source !== importSource);
+    next.designTasks = next.designTasks.filter((task) => task.source !== "topic" || !importedTopicIds.has(task.topicId));
+    const superFactory = next.series.find((item) => item.id === "s3");
+    if (superFactory) {
+      superFactory.months = [...new Set([...(superFactory.months || []), "2026-07", "2026-08", "2026-09"])];
+    }
+    SUPER_FACTORY_TOPICS.forEach((topicItem) => {
+      const nextTopic = clone(topicItem);
+      next.topics.push(nextTopic);
+      if (nextTopic.designer) {
+        next.designTasks.push({
+          id: designTaskIdForTopic(nextTopic.id),
+          source: "topic",
+          topicId: nextTopic.id,
+          title: nextTopic.title,
+          requester: nextTopic.owner,
+          designer: nextTopic.designer,
+          contentType: nextTopic.contentType || "视频",
+          platforms: topicPlatforms(nextTopic),
+          dueDate: nextTopic.publish || nextTopic.shoot || "",
+          status: "待设计",
+          delayed: false,
+          assetUrl: "",
+          note: "",
+        });
+      }
+    });
+    next.migrations.push(SUPER_FACTORY_TOPIC_VERSION);
     changed = true;
   }
   if (!Array.isArray(next.apiConnections)) {
@@ -353,6 +602,16 @@ function canSeeTopic(item) {
 function canSeeOwner(ownerName) {
   const scope = currentPermissions().topicScope;
   return scope === "all" || !currentAccount?.owner || ownerName === currentAccount.owner;
+}
+
+function canSeeDesignTask(task) {
+  const scope = currentPermissions().topicScope;
+  if (scope === "all" || !currentAccount?.owner) return true;
+  return task.requester === currentAccount.owner || task.owner === currentAccount.owner || task.designer === currentAccount.owner;
+}
+
+function visibleDesignTasks() {
+  return (data.designTasks || []).filter(canSeeDesignTask);
 }
 
 function canEditTopic(item = null) {
@@ -496,8 +755,10 @@ function renderAll() {
 }
 
 function renderSummaryCounts() {
-  $("#topicCount").textContent = String(data.topics.length);
-  $("#ownerCount").textContent = String(data.owners.length);
+  const visibleTopics = data.topics.filter(canSeeTopic);
+  const visibleOwners = currentPermissions().topicScope === "all" ? data.owners : data.owners.filter((owner) => canSeeOwner(owner.name));
+  $("#topicCount").textContent = String(visibleTopics.length);
+  $("#ownerCount").textContent = String(visibleOwners.length);
 }
 
 function renderSeriesMonthTabs() {
@@ -842,31 +1103,31 @@ function syncDesignTaskForTopic(item) {
 function renderDesignSchedule() {
   const mount = $("#designSchedule");
   if (!mount) return;
-  if (!canManageSystem()) {
-    mount.innerHTML = `<div class="empty-state">当前账号不能管理设计排期。</div>`;
-    return;
-  }
-  const rows = (data.designTasks || []).slice().sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""));
+  const rows = visibleDesignTasks().slice().sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""));
   mount.innerHTML = `
     <div class="design-schedule-head">
       <div>
         <strong>赵琳设计排期表</strong>
         <span>${rows.length} 个设计需求</span>
       </div>
-      <button class="primary-button" data-new-design-task="1">添加设计需求</button>
+      ${canManageSystem() ? `<button class="primary-button" data-new-design-task="1">添加设计需求</button>` : ""}
     </div>
     <div class="design-schedule-table">
       <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>负责人</span><span>截止</span><span>状态</span><span>成品</span></div>
-      ${rows.length ? rows.map((task) => `
-        <button class="design-row ${task.delayed ? "is-delayed" : ""}" data-edit-design-task="${task.id}">
+      ${rows.length ? rows.map((task) => {
+        const tag = canManageSystem() ? "button" : "div";
+        const editAttr = canManageSystem() ? ` data-edit-design-task="${task.id}"` : "";
+        return `
+        <${tag} class="design-row ${task.delayed ? "is-delayed" : ""}"${editAttr}>
           <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · ${task.designer}</small></span>
           <span>${(task.platforms || []).join(" / ") || "未选平台"} · ${task.contentType || "未选形式"}</span>
           <span>${task.requester || "未填写"}</span>
           <span>${task.dueDate || "待定"}</span>
           <span><i class="status ${task.delayed ? "risk" : ""}">${task.delayed ? "延期" : task.status}</i></span>
           <span>${task.assetUrl ? "已上传" : "未上传"}</span>
-        </button>
-      `).join("") : `<div class="empty-state">还没有设计排期。运营在主题里选择协助设计师后会自动生成，也可以手动添加。</div>`}
+        </${tag}>
+      `;
+      }).join("") : `<div class="empty-state">还没有设计排期。运营在主题里选择协助设计师后会自动生成，也可以手动添加。</div>`}
     </div>
   `;
 }
@@ -1293,7 +1554,7 @@ async function openAccountEditor(id) {
     hint: "账号可绑定到团队成员，并分配管理员、运营主管、内容编辑或只读成员角色。新账号必须设置密码，编辑时密码留空则保持不变。",
     fields: [
       textField("username", "登录账号", item.username),
-      selectField("owner", "绑定成员", item.owner, data.owners.map((owner) => [owner.name, `${owner.name} · ${owner.title}`])),
+      selectField("owner", "绑定成员", item.owner, ACCOUNT_PEOPLE.map((owner) => [owner.name, `${owner.name} · ${owner.title}`])),
       selectField("role", "角色", item.role, Object.entries(ROLE_LABELS)),
       selectField("status", "状态", item.status, ["启用", "停用"].map((value) => [value, value])),
       passwordField("password", item.id ? "新密码（留空不修改）" : "初始密码", ""),
