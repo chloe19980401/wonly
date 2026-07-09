@@ -282,6 +282,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   flex-shrink: 0;
 }
 
@@ -300,6 +302,7 @@ h1 {
 }
 
 .icon-button,
+.action-button,
 .primary-button,
 .ghost-button {
   min-height: 42px;
@@ -311,6 +314,22 @@ h1 {
   width: 42px;
   background: var(--panel);
   color: var(--ink);
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.action-button span {
+  font-size: 17px;
+  line-height: 1;
 }
 
 .primary-button,
