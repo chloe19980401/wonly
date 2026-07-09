@@ -215,7 +215,7 @@ function showApp() {
   $("#loginScreen").hidden = true;
   $("#appShell").hidden = false;
   renderCurrentAccount();
-  applyRoleAccess();
+  renderAll();
 }
 
 function showLogin() {
@@ -1089,10 +1089,12 @@ function bindEvents() {
 }
 
 function init() {
-  renderAll();
   bindEvents();
   if (restoreSession()) showApp();
-  else showLogin();
+  else {
+    renderAll();
+    showLogin();
+  }
 }
 
 init();
