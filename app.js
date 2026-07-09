@@ -4,7 +4,7 @@ const DESIGNER_USERNAME = "zhaolin";
 const DESIGNER_PASSWORD_HASH = "2b57de2d606b54b194dc7fbfdbb31a013cae5363e0116998f21ec6c74b9b5e7a";
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
-const TEAM_OKR_VERSION = "2026-07-team-okr-v2";
+const TEAM_OKR_VERSION = "2026-07-team-okr-v3";
 const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v1";
 
 const ROLE_LABELS = {
@@ -146,7 +146,7 @@ const JULY_TEAM_OKRS = [
         keyResults: [
           { name: "完成 12 条视频" },
           { name: "每周发布 3 条" },
-          { name: "完成 12 条脚本" },
+          { name: "12 条阿/越/印音频字幕上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
@@ -184,7 +184,7 @@ const JULY_TEAM_OKRS = [
         keyResults: [
           { name: "完成 12 条视频" },
           { name: "每周发布 3 条" },
-          { name: "完成 12 条脚本" },
+          { name: "12 条阿/越/印音频字幕上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
