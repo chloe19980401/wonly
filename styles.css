@@ -1387,7 +1387,7 @@ select {
 
 .multi-select {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1404,18 +1404,20 @@ select {
 }
 
 .multi-select summary {
-  min-height: 40px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: #ffffff;
   color: var(--ink);
   cursor: pointer;
   list-style: none;
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .multi-select summary::-webkit-details-marker {
@@ -1440,10 +1442,10 @@ select {
   left: 0;
   right: 0;
   display: grid;
-  gap: 6px;
-  max-height: 220px;
+  gap: 4px;
+  max-height: 190px;
   overflow: auto;
-  padding: 8px;
+  padding: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -1453,11 +1455,12 @@ select {
 .multi-select-menu label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 0 8px;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 7px;
   border-radius: 6px;
   color: var(--ink);
+  font-size: 13px;
 }
 
 .multi-select-menu label:hover {
@@ -1816,7 +1819,7 @@ code {
   }
 
   .nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .nav-item {

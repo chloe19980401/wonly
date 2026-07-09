@@ -13,7 +13,7 @@ const ROLE_LABELS = {
 
 const ROLE_PERMISSIONS = {
   admin: {
-    views: ["overview", "calendar", "library", "okr", "analytics", "settings"],
+    views: ["overview", "calendar", "library", "okr", "analytics", "design", "settings"],
     topicScope: "all",
     canCreateTopic: true,
     canManageOkr: true,
@@ -22,7 +22,7 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   manager: {
-    views: ["overview", "calendar", "library", "okr", "analytics"],
+    views: ["overview", "calendar", "library", "okr", "analytics", "design"],
     topicScope: "all",
     canCreateTopic: true,
     canManageOkr: true,
@@ -31,7 +31,7 @@ const ROLE_PERMISSIONS = {
     canExport: true,
   },
   marketing: {
-    views: ["overview", "calendar", "library", "analytics"],
+    views: ["overview", "calendar", "library", "analytics", "design"],
     topicScope: "all",
     canCreateTopic: true,
     canManageOkr: false,
@@ -113,7 +113,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 function topic(title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl) {
-  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, platforms: [], contentType: "视频", designer: "" };
+  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, platforms: [], contentType: "视频", referenceType: "图片", designer: "" };
 }
 
 function monthlyOkr(month, owner, objective, keyResults) {
@@ -224,6 +224,10 @@ function normalizeData(next) {
     }
     if (item.designer === undefined) {
       item.designer = "";
+      changed = true;
+    }
+    if (!item.referenceType) {
+      item.referenceType = "图片";
       changed = true;
     }
   });
@@ -890,7 +894,8 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
       selectField("status", "状态", item.status, ["待审核", "剪辑中", "可发布", "脚本待定", "拍摄中", "待分镜"].map((value) => [value, value])),
       textField("okrKey", "关联 KR", item.okrKey),
       textField("bundles", "平台组合 ID，用逗号分隔", item.bundles.join(",")),
-      textareaField("references", "参考素材，每行一个", item.references.join("\n")),
+      selectField("referenceType", "参考素材类型", item.referenceType || "图片", ["图片", "视频", "图片+视频"].map((value) => [value, value])),
+      textareaField("references", "参考图片/视频链接，每行一个", item.references.join("\n")),
       textareaField("script", "脚本结构", item.script),
       textField("shoot", "预计拍摄时间", item.shoot),
       textField("publish", "预计发布时间", item.publish),
@@ -1417,9 +1422,22 @@ function openEditor(config) {
       if (shouldClose !== false) closeEditor();
     };
   }
+  $$("#editForm [data-multi-select]").forEach(updateMultiSelectSummary);
+  $("#editForm").onchange = (event) => {
+    const fieldset = event.target.closest("[data-multi-select]");
+    if (fieldset) updateMultiSelectSummary(fieldset);
+  };
   $("#cancelEditButton").onclick = closeEditor;
   $("#editModal").hidden = false;
   config.onMount?.();
+}
+
+function updateMultiSelectSummary(fieldset) {
+  const labels = Array.from(fieldset.querySelectorAll("input:checked"))
+    .map((input) => input.closest("label")?.querySelector("span")?.textContent?.trim())
+    .filter(Boolean);
+  const summary = fieldset.querySelector("summary");
+  if (summary) summary.firstChild.textContent = labels.length ? labels.join(" / ") : "请选择";
 }
 
 function formValues(form) {
@@ -1473,7 +1491,7 @@ function multiDropdownField(name, label, selectedValues = [], options = []) {
   const pairs = options.map(optionPair);
   const selectedLabels = pairs.filter(([value]) => selected.has(value)).map(([, optionLabel]) => optionLabel);
   return `
-    <fieldset class="wide multi-select">
+    <fieldset class="multi-select" data-multi-select>
       <legend>${label}</legend>
       <details>
         <summary>${selectedLabels.length ? selectedLabels.join(" / ") : "请选择"}</summary>

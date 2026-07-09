@@ -12,7 +12,7 @@
     <title>Wonly 社媒管理系统</title>
     <link rel="icon" href="assets/favicon.svg?v=20260709-design-icon" type="image/svg+xml" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=20260709-api-rules" />
+    <link rel="stylesheet" href="styles.css?v=20260709-design-tab" />
   </head>
   <body>
     <section class="login-screen" id="loginScreen" aria-label="登录">
@@ -54,6 +54,7 @@
           <button class="nav-item" data-view="library"><span class="icon">▣</span><span>主题库</span></button>
           <button class="nav-item" data-view="okr"><span class="icon">◎</span><span>OKR</span></button>
           <button class="nav-item" data-view="analytics"><span class="icon">↗</span><span>数据看板</span></button>
+          <button class="nav-item" data-view="design"><span class="icon">✎</span><span>设计排期</span></button>
           <button class="nav-item" data-view="settings"><span class="icon">⚙</span><span>设置</span></button>
         </nav>
 
@@ -197,6 +198,19 @@
           </section>
         </section>
 
+        <section class="view" id="design">
+          <div class="section-heading">
+            <div>
+              <h2>设计排期</h2>
+              <p>运营选择协助设计师后自动进入赵琳排期表，也可以手动添加图片或视频设计需求。</p>
+            </div>
+          </div>
+          <section class="panel system-edit-panel">
+            <div class="panel-head"><h3>赵琳设计排期表</h3><span>设计需求、平台、截止时间、成品上传和延期标记</span></div>
+            <div id="designSchedule"></div>
+          </section>
+        </section>
+
         <section class="view" id="settings">
           <div class="section-heading">
             <div>
@@ -224,10 +238,6 @@
           <section class="panel system-edit-panel">
             <div class="panel-head"><h3>系统内容编辑</h3><span>系列、平台组合、成员和月度 OKR 都可以在这里修改</span></div>
             <div id="systemEditor"></div>
-          </section>
-          <section class="panel system-edit-panel">
-            <div class="panel-head"><h3>设计排期</h3><span>运营选择协助设计师后自动进入赵琳排期表，也可以手动添加设计需求</span></div>
-            <div id="designSchedule"></div>
           </section>
         </section>
       </main>
@@ -264,6 +274,6 @@
       </div>
     </div>
 
-    <script src="app.js?v=20260709-api-rules"></script>
+    <script src="app.js?v=20260709-design-tab"></script>
   </body>
 </html>
