@@ -692,7 +692,7 @@ h1 {
 .task-item,
 .platform-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: center;
   padding: 12px;
@@ -701,9 +701,9 @@ h1 {
 }
 
 .checkbox {
+  display: none;
   width: 22px;
   height: 22px;
-  display: grid;
   place-items: center;
   border-radius: 6px;
   background: #dcebe5;
