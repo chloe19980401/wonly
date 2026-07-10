@@ -1220,6 +1220,39 @@ select {
   background: #f7faf9;
 }
 
+.kr-list .kr-metric-row {
+  align-items: center;
+}
+
+.kr-metric-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.kr-metric-row input {
+  width: 76px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.kr-metric-row input:disabled {
+  background: transparent;
+  color: var(--muted);
+}
+
+.kr-metric-row b {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .kr-list span {
   color: var(--muted);
 }
@@ -1362,7 +1395,7 @@ select {
 .design-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(90px, 0.7fr) minmax(90px, 0.7fr) minmax(80px, 0.6fr) minmax(80px, 0.6fr);
+  grid-template-columns: minmax(180px, 1.4fr) minmax(130px, 0.9fr) minmax(70px, 0.55fr) minmax(88px, 0.65fr) minmax(88px, 0.65fr) minmax(80px, 0.6fr) minmax(78px, 0.55fr) minmax(80px, 0.55fr);
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -1689,7 +1722,7 @@ select {
 
 .okr-kr-row {
   display: grid;
-  grid-template-columns: auto minmax(240px, 1fr) auto;
+  grid-template-columns: auto minmax(220px, 1fr) minmax(90px, 0.35fr) minmax(90px, 0.35fr) minmax(72px, 0.25fr) auto;
   gap: 10px;
   align-items: center;
   padding: 12px;

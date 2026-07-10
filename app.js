@@ -4,9 +4,9 @@ const DESIGNER_USERNAME = "zhaolin";
 const DESIGNER_PASSWORD_HASH = "2b57de2d606b54b194dc7fbfdbb31a013cae5363e0116998f21ec6c74b9b5e7a";
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
-const TEAM_OKR_VERSION = "2026-07-team-okr-v5";
-const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v3";
-const SUPER_FACTORY_TOPIC_SOURCE = "super-factory-topic-import-v3";
+const TEAM_OKR_VERSION = "2026-07-team-okr-v7";
+const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v4";
+const SUPER_FACTORY_TOPIC_SOURCE = "super-factory-topic-import-v4";
 
 const ROLE_LABELS = {
   admin: "管理员",
@@ -76,17 +76,26 @@ const ROLE_PERMISSIONS = {
 };
 
 const REAL_OWNERS = [
-  { name: "胡译泰", title: "运营负责人" },
+  { name: "李铧燕", title: "运营经理" },
   { name: "徐一诺", title: "市场部运营" },
   { name: "周宗莉", title: "市场部运营" },
   { name: "周雨晴", title: "市场部运营" },
 ];
 const REAL_OWNER_NAMES = new Set(REAL_OWNERS.map((owner) => owner.name));
-const LEGACY_OWNER_NAMES = new Set(["Mia", "Leo", "Anna", "Chris", "Jay"]);
+const LEGACY_OWNER_NAMES = new Set(["Mia", "Leo", "Anna", "Chris", "Jay", "胡译泰"]);
 const FALLBACK_OWNER = REAL_OWNERS[0].name;
 const DESIGNERS = [{ name: "赵琳", title: "协助设计师" }];
-const ACCOUNT_PEOPLE = [...REAL_OWNERS, ...DESIGNERS];
+const LEGACY_ACCOUNT_PEOPLE = [{ name: "胡译泰", title: "运营账号" }];
+const ACCOUNT_PEOPLE = [...REAL_OWNERS, ...LEGACY_ACCOUNT_PEOPLE, ...DESIGNERS];
 const ACCOUNT_PERSON_NAMES = new Set(ACCOUNT_PEOPLE.map((person) => person.name));
+const SEEDED_TEAM_ACCOUNTS = [
+  { id: "acct-admin", username: ADMIN_USERNAME, owner: "李铧燕", role: "admin", passwordHash: ADMIN_PASSWORD_HASH },
+  { id: "acct-xuyinuo", username: "xuyinuo", owner: "徐一诺", role: "marketing", passwordHash: "7e55d951a83b1849491eb4b4290039af2d2e8fe24da07dcf0766324edd4c7fe6" },
+  { id: "acct-zhouyuqing", username: "zhouyuqing", owner: "周雨晴", role: "marketing", passwordHash: "f1b6611348f41e1cc6771fd995eb2b498bf617a0a91acf885bb3984ed841e56e" },
+  { id: "acct-zhouzongli", username: "zhouzongli", owner: "周宗莉", role: "marketing", passwordHash: "734f8457e266550306f469a89d7f38ab2089fac0c8dd38d0d763c3b18122fc80" },
+  { id: "acct-huyitai", username: "huyitai", owner: "胡译泰", role: "admin", passwordHash: "8c15345f11ad1b06117d290a655e1acd79264d41e82e88b5d9521f2e6615defd" },
+  { id: "acct-zhaolin", username: DESIGNER_USERNAME, owner: "赵琳", role: "designer", passwordHash: DESIGNER_PASSWORD_HASH },
+];
 const CONTENT_TYPES = ["视频", "图文"];
 const PUBLISH_PLATFORMS = ["YouTube", "TikTok", "Instagram", "Facebook", "LinkedIn"];
 const SERIES_MONTH_OPTIONS = ["2026-07", "2026-08", "2026-09"];
@@ -145,9 +154,9 @@ const JULY_TEAM_OKRS = [
         id: "o-1",
         title: "完成 7 月印尼视频产出",
         keyResults: [
-          { name: "完成 12 条视频" },
-          { name: "每周发布 3 条" },
-          { name: "12 条阿/越/印/哈音频字幕上传云盘" },
+          { name: "完成 8 条视频" },
+          { name: "集训后发布 8 条" },
+          { name: "8 条阿/越/印/哈音频字幕上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
@@ -213,14 +222,50 @@ const JULY_TEAM_OKRS = [
   },
 ].map((okr) => ({ ...okr, keyResults: okr.objectives.flatMap((objective) => objective.keyResults) }));
 const SUPER_FACTORY_TOPICS = buildSuperFactoryTopics();
+function kr(name, target, actual = 0, unit = "") {
+  return { name, target, actual, unit };
+}
+
+const JULY_TEAM_OKRS_FIXED = [
+  {
+    id: "2026-07-徐一诺-图文okr",
+    month: "2026-07",
+    owner: "徐一诺",
+    objective: "完成 7 月图文内容产出",
+    objectives: [
+      { id: "o-1", title: "完成 7 月图文内容产出", keyResults: [kr("完成图文", 20, 0, "条"), kr("每周发布", 5, 0, "条"), kr("多语言图文上传云盘", 20, 0, "条"), kr("周五规划", 4, 0, "次")] },
+      { id: "o-2", title: "完成工厂证据图文矩阵", keyResults: [kr("生产流程", 5, 0, "条"), kr("质量检测", 5, 0, "条"), kr("交付包装", 5, 0, "条"), kr("客户痛点", 5, 0, "条")] },
+      { id: "o-3", title: "达成 7 月图文效果指标", keyResults: [kr("曝光", 6000, 0, "次"), kr("互动率", 3, 0, "%"), kr("询盘线索", 5, 0, "条"), kr("学习分享", 1, 0, "次")] },
+    ],
+  },
+  {
+    id: "2026-07-周雨晴-印尼视频okr",
+    month: "2026-07",
+    owner: "周雨晴",
+    objective: "完成 7 月印尼视频产出",
+    objectives: [
+      { id: "o-1", title: "完成 7 月印尼视频产出", keyResults: [kr("完成视频", 12, 0, "条"), kr("每周发布", 3, 0, "条"), kr("多语言音频字幕上传云盘", 12, 0, "条"), kr("周五规划", 4, 0, "次")] },
+      { id: "o-2", title: "完成印尼本地化内容矩阵", keyResults: [kr("家庭安全", 4, 0, "条"), kr("暖色家居", 3, 0, "条"), kr("防潮耐用", 3, 0, "条"), kr("家庭价值", 2, 0, "条")] },
+      { id: "o-3", title: "达成 7 月印尼视频效果指标", keyResults: [kr("播放", 12000, 0, "次"), kr("完播率", 25, 0, "%"), kr("询盘线索", 6, 0, "条"), kr("学习分享", 1, 0, "次")] },
+    ],
+  },
+  {
+    id: "2026-07-周宗莉-越南视频okr",
+    month: "2026-07",
+    owner: "周宗莉",
+    objective: "完成 7 月越南视频产出",
+    objectives: [
+      { id: "o-1", title: "完成 7 月越南视频产出", keyResults: [kr("完成视频", 8, 0, "条"), kr("集训后发布", 8, 0, "条"), kr("多语言音频字幕上传云盘", 8, 0, "条"), kr("周五规划", 3, 0, "次")] },
+      { id: "o-2", title: "完成越南本地化内容矩阵", keyResults: [kr("Tet 视觉", 3, 0, "条"), kr("生产过程", 2, 0, "条"), kr("质量检测", 2, 0, "条"), kr("经销商信任", 1, 0, "条")] },
+      { id: "o-3", title: "达成 7 月越南视频效果指标", keyResults: [kr("播放", 8000, 0, "次"), kr("完播率", 25, 0, "%"), kr("询盘线索", 4, 0, "条"), kr("学习分享", 1, 0, "次")] },
+    ],
+  },
+].map((okr) => ({ ...okr, keyResults: okr.objectives.flatMap((objective) => objective.keyResults) }));
 
 const defaultData = {
   activeMonth: "2026-07",
   owners: clone(REAL_OWNERS),
-  accounts: [
-    { id: "acct-admin", username: ADMIN_USERNAME, owner: FALLBACK_OWNER, role: "admin", passwordHash: ADMIN_PASSWORD_HASH, status: "启用" },
-    { id: "acct-zhaolin", username: DESIGNER_USERNAME, owner: "赵琳", role: "designer", passwordHash: DESIGNER_PASSWORD_HASH, status: "启用" },
-  ],
+  accounts: SEEDED_TEAM_ACCOUNTS.map((account) => ({ ...account, status: "启用" })),
   platformBundles: [
     { id: "shorts-core", name: "短视频通用包", platforms: ["YouTube Shorts", "TikTok", "Instagram Reels"], format: "9:16 竖屏，15-45s，英文字幕", usage: "同一条核心视频适配三端，统一 Hook 和 CTA，只微调封面与标题。" },
     { id: "visual-social", name: "视觉社交包", platforms: ["Instagram Grid", "Instagram Carousel", "Facebook"], format: "1:1 / 4:5 图片、短视频转发、本地化文案", usage: "适合生活方式、工厂美学、产品细节，把视频素材拆成图文故事。" },
@@ -337,9 +382,9 @@ function buildSuperFactoryTopics() {
     ...graphics.map((item) => ({ title: item[0], market: item[1], owner: "徐一诺", subtitle: item[2], contentType: "图文", platforms: ["Instagram", "Facebook", "LinkedIn"], designer: "赵琳" })),
   ];
   return items.map((item, index) => {
-    const publish = dateFromJuly14(index + 2);
-    const shoot = dateFromJuly14(index);
     const owner = superFactoryOwner(item, index);
+    const shoot = scheduledJulyWorkday(index, owner, 0);
+    const publish = scheduledJulyWorkday(index, owner, 2);
     return {
       id: `sf-${idFrom(item.title)}`,
       title: item.title,
@@ -371,11 +416,28 @@ function superFactoryOwner(item, index) {
   return index % 2 === 0 ? "周雨晴" : "周宗莉";
 }
 
-function dateFromJuly14(offset) {
-  const date = new Date(2026, 6, 10 + (offset % 22));
+function scheduledJulyWorkday(index, owner, extraDays = 0) {
+  const date = new Date(2026, 6, 10 + (index % 22) + extraDays);
+  let guard = 0;
+  while ((!isWorkday(date) || isUnavailable(owner, date)) && guard < 40) {
+    date.setDate(date.getDate() + 1);
+    guard += 1;
+  }
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function isWorkday(date) {
+  const day = date.getDay();
+  return day !== 0 && day !== 6;
+}
+
+function isUnavailable(owner, date) {
+  if (owner !== "周宗莉") return false;
+  const start = new Date(2026, 6, 14);
+  const end = new Date(2026, 6, 21);
+  return date >= start && date <= end;
 }
 
 function monthlyOkr(month, owner, objective, keyResults) {
@@ -451,6 +513,23 @@ function normalizeData(next) {
     next.accounts.push(designerAccount);
     changed = true;
   }
+  SEEDED_TEAM_ACCOUNTS.forEach((seed) => {
+    const index = next.accounts.findIndex((account) => account.username === seed.username);
+    const account = {
+      ...seed,
+      id: index >= 0 ? next.accounts[index].id : seed.id,
+      passwordHash: seed.passwordHash,
+      status: "启用",
+    };
+    if (index >= 0) {
+      const before = JSON.stringify(next.accounts[index]);
+      next.accounts[index] = { ...next.accounts[index], ...account };
+      if (before !== JSON.stringify(next.accounts[index])) changed = true;
+    } else {
+      next.accounts.push(account);
+      changed = true;
+    }
+  });
   if (!next.accounts.length) next.accounts = clone(defaultData.accounts);
 
   if (!Array.isArray(next.series)) next.series = clone(defaultData.series);
@@ -476,9 +555,10 @@ function normalizeData(next) {
       }
     });
   });
+  next.okrs.forEach((okr) => normalizeOkrMetrics(okr));
   if (!Array.isArray(next.migrations)) next.migrations = [];
   if (!next.migrations.includes(TEAM_OKR_VERSION)) {
-    JULY_TEAM_OKRS.forEach((okr) => {
+    JULY_TEAM_OKRS_FIXED.forEach((okr) => {
       const index = next.okrs.findIndex((item) => item.id === okr.id || (item.month === okr.month && item.owner === okr.owner));
       if (index >= 0) next.okrs[index] = clone(okr);
       else next.okrs.push(clone(okr));
@@ -519,9 +599,11 @@ function normalizeData(next) {
           designer: nextTopic.designer,
           contentType: nextTopic.contentType || "视频",
           platforms: topicPlatforms(nextTopic),
+          requestedAt: nextTopic.shoot || todayString(),
           dueDate: nextTopic.publish || nextTopic.shoot || "",
           status: "待设计",
           delayed: false,
+          completedAt: "",
           assetUrl: "",
           note: "",
         });
@@ -530,6 +612,13 @@ function normalizeData(next) {
     next.migrations.push(SUPER_FACTORY_TOPIC_VERSION);
     changed = true;
   }
+  next.designTasks.forEach((task) => {
+    if (!task.requestedAt) {
+      task.requestedAt = task.dueDate || todayString();
+      changed = true;
+    }
+    if (!task.completedAt) task.completedAt = "";
+  });
   if (!Array.isArray(next.apiConnections)) {
     next.apiConnections = clone(defaultData.apiConnections);
     changed = true;
@@ -611,6 +700,12 @@ function firstAllowedView() {
   return currentPermissions().views[0] ?? "overview";
 }
 
+function defaultLandingView() {
+  if (currentAccount?.role === "designer" && canAccessView("design")) return "design";
+  if (canAccessView("overview")) return "overview";
+  return firstAllowedView();
+}
+
 function canSeeTopic(item) {
   const scope = currentPermissions().topicScope;
   return scope === "all" || !currentAccount?.owner || item.owner === currentAccount.owner;
@@ -646,6 +741,10 @@ function canEditTopic(item = null) {
 
 function canManageOkr() {
   return Boolean(currentPermissions().canManageOkr);
+}
+
+function canUpdateOkrActual(okr) {
+  return canManageOkr() || (currentAccount?.role === "marketing" && okr.owner === currentAccount.owner);
 }
 
 function canManageSystem() {
@@ -699,6 +798,7 @@ function showApp() {
   $("#appShell").hidden = false;
   renderCurrentAccount();
   renderAll();
+  switchView(defaultLandingView());
 }
 
 function showLogin() {
@@ -732,7 +832,7 @@ function restoreSession() {
 function renderCurrentAccount() {
   const account = currentAccount ?? data.accounts.find((item) => item.username === ADMIN_USERNAME);
   if (!account) return;
-  $("#currentAccountPill").textContent = `${ROLE_LABELS[account.role] ?? account.role} · ${account.username}`;
+  $("#currentAccountPill").textContent = `${account.owner || account.username} · ${ROLE_LABELS[account.role] ?? account.role} · ${account.username}`;
 }
 
 function applyRoleAccess() {
@@ -997,24 +1097,64 @@ function renderContentTable(keyword = "") {
   `).join("") : `<tr><td colspan="7" class="empty-table">还没有帖子主题，可以从“新建内容”开始手动添加。</td></tr>`;
 }
 
+function normalizeKr(krItem = {}) {
+  const name = String(krItem.name || "").trim();
+  const inferredTarget = Number(krItem.target || String(name).match(/(\d+(?:\.\d+)?)/)?.[1] || 1);
+  return {
+    ...krItem,
+    name,
+    target: Number.isFinite(inferredTarget) && inferredTarget > 0 ? inferredTarget : 1,
+    actual: Number(krItem.actual || 0),
+    unit: krItem.unit || inferKrUnit(name),
+  };
+}
+
+function inferKrUnit(name = "") {
+  if (name.includes("%") || name.includes("率")) return "%";
+  if (name.includes("播放") || name.includes("曝光")) return "次";
+  if (name.includes("分享") || name.includes("规划")) return "次";
+  if (name.includes("线索")) return "条";
+  return "条";
+}
+
+function normalizeOkrMetrics(okr) {
+  if (Array.isArray(okr.objectives) && okr.objectives.length) {
+    okr.objectives = okr.objectives.map((objective, index) => ({
+      id: objective.id || `o-${index + 1}`,
+      title: objective.title || objective.objective || "",
+      keyResults: (Array.isArray(objective.keyResults) ? objective.keyResults : []).map(normalizeKr),
+    }));
+    okr.keyResults = okr.objectives.flatMap((objective) => objective.keyResults);
+    return okr;
+  }
+  okr.keyResults = (Array.isArray(okr.keyResults) ? okr.keyResults : []).map(normalizeKr);
+  return okr;
+}
+
 function okrScore(okr) {
-  const keyResults = okrObjectives(okr).flatMap((objective) => objective.keyResults);
+  const keyResults = okrObjectives(okr).flatMap((objective) => objective.keyResults).filter((krItem) => krItem.name);
   if (!keyResults.length) return 0;
-  return Math.round((keyResults.filter((kr) => kr.name).length / keyResults.length) * 100);
+  const total = keyResults.reduce((sum, krItem) => {
+    const target = Number(krItem.target || 0);
+    if (target <= 0) return sum;
+    return sum + Math.min(Number(krItem.actual || 0) / target, 1);
+  }, 0);
+  return Math.round((total / keyResults.length) * 100);
 }
 
 function okrObjectives(okr) {
+  normalizeOkrMetrics(okr);
   if (Array.isArray(okr.objectives) && okr.objectives.length) {
     return okr.objectives.map((objective, index) => ({
       id: objective.id || `o-${index + 1}`,
       title: objective.title || objective.objective || "",
-      keyResults: Array.isArray(objective.keyResults) ? objective.keyResults : [],
+      keyResults: Array.isArray(objective.keyResults) ? objective.keyResults.map(normalizeKr) : [],
     }));
   }
   return [{
     id: "o-1",
     title: okr.objective || "",
-    keyResults: Array.isArray(okr.keyResults) ? okr.keyResults : [],
+    keyResults: Array.isArray(okr.keyResults) ? okr.keyResults.map(normalizeKr) : [],
   }];
 }
 
@@ -1036,6 +1176,7 @@ function renderOkr() {
     const score = okrScore(okr);
     const ownerTopics = monthTopics.filter((item) => item.owner === okr.owner);
     const objectives = okrObjectives(okr);
+    const canUpdate = canUpdateOkrActual(okr);
     return `
       <article class="okr-card">
         <div class="okr-head">
@@ -1047,7 +1188,15 @@ function renderOkr() {
             <div class="okr-objective-summary">
               <p><b>O${objectiveIndex + 1}：</b>${objective.title || "未填写 Objective"}</p>
               <div class="kr-list">
-                ${objective.keyResults.map((kr) => `<div><span>${kr.name}</span></div>`).join("")}
+                ${objective.keyResults.map((krItem, krIndex) => `
+                  <div class="kr-metric-row">
+                    <span>${krItem.name}</span>
+                    <label>
+                      <input type="number" step="0.1" value="${escapeAttr(krItem.actual || 0)}" ${canUpdate ? "" : "disabled"} data-okr-actual="${okr.id}" data-objective-index="${objectiveIndex}" data-kr-index="${krIndex}" />
+                      <b>/ ${krItem.target}${krItem.unit || ""}</b>
+                    </label>
+                  </div>
+                `).join("")}
               </div>
             </div>
           `).join("")}
@@ -1062,6 +1211,20 @@ function renderOkr() {
       </article>
     `;
   }).join("");
+}
+
+function updateOkrActual(input) {
+  const okr = data.okrs.find((item) => item.id === input.dataset.okrActual);
+  if (!okr || !canUpdateOkrActual(okr)) return;
+  const objectiveIndex = Number(input.dataset.objectiveIndex);
+  const krIndex = Number(input.dataset.krIndex);
+  normalizeOkrMetrics(okr);
+  const keyResult = okr.objectives?.[objectiveIndex]?.keyResults?.[krIndex];
+  if (!keyResult) return;
+  keyResult.actual = Math.max(0, Number(input.value || 0));
+  okr.keyResults = okr.objectives.flatMap((objective) => objective.keyResults);
+  saveData();
+  renderOkr();
 }
 
 function dataForTopic(item) {
@@ -1159,9 +1322,11 @@ function syncDesignTaskForTopic(item) {
     designer: item.designer,
     contentType: item.contentType || "视频",
     platforms: topicPlatforms(item),
+    requestedAt: existing.requestedAt || item.shoot || item.publish || todayString(),
     dueDate: item.publish || item.shoot || "",
     status: existing.status || "待设计",
     delayed: Boolean(existing.delayed),
+    completedAt: existing.completedAt || "",
     assetUrl: existing.assetUrl || "",
     note: existing.note || "",
   };
@@ -1182,7 +1347,7 @@ function renderDesignSchedule() {
       ${canManageDesignTask() ? `<button class="primary-button" data-new-design-task="1">添加设计需求</button>` : ""}
     </div>
     <div class="design-schedule-table">
-      <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>设计师</span><span>截止</span><span>状态</span><span>成品</span></div>
+      <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>设计师</span><span>提出</span><span>截止</span><span>耗时</span><span>状态</span><span>成品</span></div>
       ${rows.length ? rows.map((task) => {
         const tag = canManageDesignTask(task) ? "button" : "div";
         const editAttr = canManageDesignTask(task) ? ` data-edit-design-task="${task.id}"` : "";
@@ -1191,7 +1356,9 @@ function renderDesignSchedule() {
           <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · 需求人：${task.requester || "未填写"}</small></span>
           <span>${(task.platforms || []).join(" / ") || "未选平台"} · ${task.contentType || "未选形式"}</span>
           <span>${task.designer || "赵琳"}</span>
+          <span>${task.requestedAt || "待定"}</span>
           <span>${task.dueDate || "待定"}</span>
+          <span>${designDuration(task)}</span>
           <span><i class="status ${task.delayed ? "risk" : ""}">${task.delayed ? "延期" : task.status}</i></span>
           <span>${assetSummary(task.assetUrl)}</span>
         </${tag}>
@@ -1436,9 +1603,11 @@ function openDesignTaskEditor(id = "") {
     designer: currentAccount?.role === "designer" ? currentAccount.owner : DESIGNERS[0].name,
     contentType: "图文",
     platforms: [],
+    requestedAt: todayString(),
     dueDate: "",
     status: "待设计",
     delayed: false,
+    completedAt: "",
     assetUrl: "",
     note: "",
   };
@@ -1452,8 +1621,10 @@ function openDesignTaskEditor(id = "") {
       selectField("requester", "需求负责人", item.requester || currentAccount?.owner || FALLBACK_OWNER, ACCOUNT_PEOPLE.map((owner) => [owner.name, owner.name])),
       multiDropdownField("platforms", "发布平台", item.platforms || [], PUBLISH_PLATFORMS),
       selectField("contentType", "内容形式", item.contentType || "图文", CONTENT_TYPES.map((value) => [value, value])),
+      textField("requestedAt", "需求提出时间", item.requestedAt || todayString()),
       textField("dueDate", "设计截止时间", item.dueDate || ""),
       selectField("status", "设计状态", item.status || "待设计", ["待设计", "设计中", "待确认", "已完成"].map((value) => [value, value])),
+      textField("completedAt", "完成时间（已完成时填写）", item.completedAt || ""),
       selectField("delayed", "是否延期", item.delayed ? "true" : "false", [["false", "未延期"], ["true", "已延期"]]),
       textareaField("assetUrl", "成品文件/链接，每行一个，支持多图", item.assetUrl || ""),
       `<label class="wide"><span>上传多图</span><input id="designAssetFiles" type="file" accept="image/*" multiple /></label>`,
@@ -1472,6 +1643,8 @@ function openDesignTaskEditor(id = "") {
         source: item.source || "manual",
         requester: canManageSystem() ? values.requester : currentAccount?.owner || values.requester,
         designer: canManageSystem() ? values.designer : currentAccount?.owner || values.designer,
+        requestedAt: values.requestedAt || item.requestedAt || todayString(),
+        completedAt: values.status === "已完成" ? (values.completedAt || item.completedAt || todayString()) : "",
         platforms: arrayValue(values.platforms).filter(Boolean),
         delayed: values.delayed === "true",
       };
@@ -1575,6 +1748,23 @@ function assetSummary(assetUrl = "") {
   const count = String(assetUrl || "").split(/\n+/).map((item) => item.trim()).filter(Boolean).length;
   if (!count) return "未上传";
   return count === 1 ? "1 个文件" : `${count} 个文件`;
+}
+
+function todayString() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function designDuration(task) {
+  if (!task.requestedAt) return "待定";
+  const start = new Date(`${task.requestedAt}T00:00:00`);
+  const endText = task.status === "已完成" && task.completedAt ? task.completedAt : todayString();
+  const end = new Date(`${endText}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "待定";
+  const days = Math.max(0, Math.ceil((end - start) / 86400000));
+  return task.status === "已完成" ? `${days} 天完成` : `已 ${days} 天`;
 }
 
 function openApiConnectionEditor(id = "") {
@@ -2087,10 +2277,14 @@ function okrObjectiveBlock(objective, index) {
 }
 
 function okrKeyResultRow(kr, index) {
+  const item = normalizeKr(kr);
   return `
     <div class="okr-kr-row">
       <span class="okr-index" data-kr-index>KR${index + 1}</span>
-      <input name="krName" value="${escapeAttr(kr.name || "")}" placeholder="填写一个可量化指标，例如：发布 20 条短视频" />
+      <input name="krName" value="${escapeAttr(item.name || "")}" placeholder="填写可量化指标" />
+      <input type="number" step="0.1" name="krTarget" value="${escapeAttr(item.target || 0)}" placeholder="目标" />
+      <input type="number" step="0.1" name="krActual" value="${escapeAttr(item.actual || 0)}" placeholder="实际" />
+      <input name="krUnit" value="${escapeAttr(item.unit || "")}" placeholder="单位" />
       <button class="icon-button" type="button" data-remove-kr title="删除 KR" aria-label="删除 KR">×</button>
     </div>
   `;
@@ -2110,6 +2304,9 @@ function collectOkrObjectivesFromEditor() {
     const title = block.querySelector('[name="objectiveTitle"]').value.trim();
     const keyResults = Array.from(block.querySelectorAll(".okr-kr-row")).map((row) => ({
       name: row.querySelector('[name="krName"]').value.trim(),
+      target: Number(row.querySelector('[name="krTarget"]')?.value || 0),
+      actual: Number(row.querySelector('[name="krActual"]')?.value || 0),
+      unit: row.querySelector('[name="krUnit"]')?.value.trim() || "",
     })).filter((kr) => kr.name);
     return { id: `o-${objectiveIndex + 1}`, title, keyResults };
   }).filter((objective) => objective.title);
@@ -2261,6 +2458,9 @@ function bindEvents() {
     const file = event.target.files?.[0];
     uploadPublicDocFile(file);
     event.target.value = "";
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target?.matches?.("[data-okr-actual]")) updateOkrActual(event.target);
   });
   document.addEventListener("keydown", (event) => {
     if ((event.key === "Enter" || event.key === " ") && event.target?.matches?.("[data-view-series]")) {
