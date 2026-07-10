@@ -4,8 +4,9 @@ const DESIGNER_USERNAME = "zhaolin";
 const DESIGNER_PASSWORD_HASH = "2b57de2d606b54b194dc7fbfdbb31a013cae5363e0116998f21ec6c74b9b5e7a";
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
-const TEAM_OKR_VERSION = "2026-07-team-okr-v4";
-const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v1";
+const TEAM_OKR_VERSION = "2026-07-team-okr-v5";
+const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v3";
+const SUPER_FACTORY_TOPIC_SOURCE = "super-factory-topic-import-v3";
 
 const ROLE_LABELS = {
   admin: "管理员",
@@ -108,7 +109,7 @@ const JULY_TEAM_OKRS = [
         keyResults: [
           { name: "完成 20 条图文" },
           { name: "每周发布 5 条" },
-          { name: "20 条阿/越/印图文上传云盘" },
+          { name: "20 条阿/越/印/哈图文上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
@@ -146,7 +147,7 @@ const JULY_TEAM_OKRS = [
         keyResults: [
           { name: "完成 12 条视频" },
           { name: "每周发布 3 条" },
-          { name: "12 条阿/越/印音频字幕上传云盘" },
+          { name: "12 条阿/越/印/哈音频字幕上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
@@ -184,7 +185,7 @@ const JULY_TEAM_OKRS = [
         keyResults: [
           { name: "完成 12 条视频" },
           { name: "每周发布 3 条" },
-          { name: "12 条阿/越/印音频字幕上传云盘" },
+          { name: "12 条阿/越/印/哈音频字幕上传云盘" },
           { name: "完成 4 次周五规划" },
         ],
       },
@@ -229,7 +230,7 @@ const defaultData = {
   series: [
     { id: "s1", code: "S1", name: "只看王力门", position: "品牌实力展示", audience: "B2B + C端", main: "TikTok + LinkedIn", months: ["2026-07"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用工厂实力和真实测试建立信任，适合沉淀长线品牌资产。", color: "#0f8f61", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
     { id: "s2", code: "S2", name: "Gossip Girl", position: "场景化生活方式", audience: "C端女性", main: "TikTok + Instagram", months: ["2026-07", "2026-08"], cycle: "每周 1-2 个主题，连续 12 周", conclusion: "用生活化场景拉近距离，适合测试审美、情绪和人群偏好。", color: "#b64f78", bundles: ["shorts-core", "visual-social"] },
-    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", months: ["2026-08", "2026-09"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
+    { id: "s3", code: "S3", name: "超级工厂", position: "工厂实力背书", audience: "B2B + 经销商", main: "TikTok + Instagram", months: ["2026-07", "2026-08", "2026-09"], cycle: "7 月集中导入 70 个主题，按周筛选执行", conclusion: "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。", color: "#087b86", bundles: ["shorts-core", "visual-social", "b2b-proof"] },
     { id: "s4", code: "S4", name: "暴力测试", position: "产品力极限验证", audience: "C端男性", main: "TikTok + YouTube", months: ["2026-09"], cycle: "每周 1 个主题，连续 12 周", conclusion: "用强冲突测试制造记忆点，适合快速判断产品卖点是否成立。", color: "#bb3d3d", bundles: ["shorts-core", "b2b-proof", "data-thread"] },
   ],
   topics: [],
@@ -243,6 +244,7 @@ let data = loadData();
 let activeMonth = data.activeMonth;
 let activeSeriesMonth = "all";
 let activeSeries = "all";
+let activeCalendarWeek = "all";
 let currentAccount = null;
 
 const $ = (selector) => document.querySelector(selector);
@@ -337,15 +339,16 @@ function buildSuperFactoryTopics() {
   return items.map((item, index) => {
     const publish = dateFromJuly14(index + 2);
     const shoot = dateFromJuly14(index);
+    const owner = superFactoryOwner(item, index);
     return {
       id: `sf-${idFrom(item.title)}`,
       title: item.title,
       subtitle: item.subtitle,
       seriesId: "s3",
-      owner: item.owner,
+      owner,
       month: publish.slice(0, 7),
       status: "待分镜",
-      okrKey: item.contentType === "图文" ? "徐一诺 O2" : item.market === "Indonesia" ? "周雨晴 O2" : item.market === "Vietnam" ? "周宗莉 O2" : "超级工厂 O1",
+      okrKey: item.contentType === "图文" ? "徐一诺 O2" : owner === "周雨晴" ? "周雨晴 O2" : "周宗莉 O2",
       bundles: item.contentType === "图文" ? ["visual-social", "data-thread"] : item.long ? ["b2b-proof", "data-thread"] : ["shorts-core", "b2b-proof"],
       references: [],
       script: `${item.subtitle}\n拍摄/制作：围绕「${item.title}」展示工厂证据、客户痛点和可验证细节。`,
@@ -356,13 +359,20 @@ function buildSuperFactoryTopics() {
       contentType: item.contentType,
       referenceType: item.contentType === "图文" ? "图片" : "视频",
       designer: item.designer || "",
-      source: "super-factory-topic-import-v1",
+      source: SUPER_FACTORY_TOPIC_SOURCE,
     };
   });
 }
 
+function superFactoryOwner(item, index) {
+  if (item.contentType === "图文") return "徐一诺";
+  if (item.market === "Indonesia") return "周雨晴";
+  if (item.market === "Vietnam") return "周宗莉";
+  return index % 2 === 0 ? "周雨晴" : "周宗莉";
+}
+
 function dateFromJuly14(offset) {
-  const date = new Date(2026, 6, 14 + offset);
+  const date = new Date(2026, 6, 10 + (offset % 22));
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${date.getFullYear()}-${month}-${day}`;
@@ -487,13 +497,14 @@ function normalizeData(next) {
     changed = true;
   }
   if (!next.migrations.includes(SUPER_FACTORY_TOPIC_VERSION)) {
-    const importSource = "super-factory-topic-import-v1";
-    const importedTopicIds = new Set(next.topics.filter((item) => item.source === importSource).map((item) => item.id));
-    next.topics = next.topics.filter((item) => item.source !== importSource);
+    const importedTopicIds = new Set(next.topics.filter((item) => String(item.source || "").startsWith("super-factory-topic-import")).map((item) => item.id));
+    next.topics = next.topics.filter((item) => !String(item.source || "").startsWith("super-factory-topic-import"));
     next.designTasks = next.designTasks.filter((task) => task.source !== "topic" || !importedTopicIds.has(task.topicId));
     const superFactory = next.series.find((item) => item.id === "s3");
     if (superFactory) {
       superFactory.months = [...new Set([...(superFactory.months || []), "2026-07", "2026-08", "2026-09"])];
+      superFactory.cycle = "7 月集中导入 70 个主题，按周筛选执行";
+      superFactory.conclusion = "用生产、质检和交付细节提高专业可信度，适合招商和经销线索。";
     }
     SUPER_FACTORY_TOPICS.forEach((topicItem) => {
       const nextTopic = clone(topicItem);
@@ -902,11 +913,48 @@ function renderFilters() {
   const current = $("#seriesFilter").value || "all";
   $("#seriesFilter").innerHTML = `<option value="all">全部系列</option>${data.series.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}`;
   $("#seriesFilter").value = data.series.some((item) => item.id === current) ? current : "all";
+  const visibleWeeks = calendarWeekOptions();
+  if (!visibleWeeks.some((item) => item.id === activeCalendarWeek)) activeCalendarWeek = "all";
+  $("#weekFilter").innerHTML = `<option value="all">全部周次</option>${visibleWeeks.map((item) => `<option value="${item.id}">${item.label}</option>`).join("")}`;
+  $("#weekFilter").value = activeCalendarWeek;
+}
+
+function calendarWeekOptions() {
+  const map = new Map();
+  data.topics
+    .filter((item) => canSeeTopic(item) && (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth)
+    .forEach((item) => {
+      const id = calendarWeekId(item.publish);
+      if (!map.has(id)) map.set(id, calendarWeekLabel(item.publish));
+    });
+  return Array.from(map, ([id, label]) => ({ id, label })).sort((a, b) => {
+    if (a.id === "unscheduled") return 1;
+    if (b.id === "unscheduled") return -1;
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function calendarWeekId(dateText = "") {
+  if (!dateText) return "unscheduled";
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "unscheduled";
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const week = Math.floor((date.getDate() + firstDay.getDay() - 1) / 7) + 1;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-w${week}`;
+}
+
+function calendarWeekLabel(dateText = "") {
+  if (!dateText) return "待定";
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "待定";
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const week = Math.floor((date.getDate() + firstDay.getDay() - 1) / 7) + 1;
+  return `${date.getMonth() + 1}月第${week}周`;
 }
 
 function renderCalendar() {
   const rows = data.topics
-    .filter((item) => canSeeTopic(item) && (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth)
+    .filter((item) => canSeeTopic(item) && (activeSeries === "all" || item.seriesId === activeSeries) && item.month === activeMonth && (activeCalendarWeek === "all" || calendarWeekId(item.publish) === activeCalendarWeek))
     .sort((a, b) => a.publish.localeCompare(b.publish));
   if (!rows.length) {
     $("#calendarBoard").innerHTML = `<div class="empty-state">还没有内容规划。点击右上角“新建内容”或到设置里新增帖子主题。</div>`;
@@ -1134,18 +1182,18 @@ function renderDesignSchedule() {
       ${canManageDesignTask() ? `<button class="primary-button" data-new-design-task="1">添加设计需求</button>` : ""}
     </div>
     <div class="design-schedule-table">
-      <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>负责人</span><span>截止</span><span>状态</span><span>成品</span></div>
+      <div class="design-row design-head"><span>需求</span><span>平台/形式</span><span>设计师</span><span>截止</span><span>状态</span><span>成品</span></div>
       ${rows.length ? rows.map((task) => {
         const tag = canManageDesignTask(task) ? "button" : "div";
         const editAttr = canManageDesignTask(task) ? ` data-edit-design-task="${task.id}"` : "";
         return `
         <${tag} class="design-row ${task.delayed ? "is-delayed" : ""}"${editAttr}>
-          <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · ${task.designer}</small></span>
+          <span><strong>${task.title}</strong><small>${task.source === "topic" ? "来自主题" : "手动需求"} · 需求人：${task.requester || "未填写"}</small></span>
           <span>${(task.platforms || []).join(" / ") || "未选平台"} · ${task.contentType || "未选形式"}</span>
-          <span>${task.requester || "未填写"}</span>
+          <span>${task.designer || "赵琳"}</span>
           <span>${task.dueDate || "待定"}</span>
           <span><i class="status ${task.delayed ? "risk" : ""}">${task.delayed ? "延期" : task.status}</i></span>
-          <span>${task.assetUrl ? "已上传" : "未上传"}</span>
+          <span>${assetSummary(task.assetUrl)}</span>
         </${tag}>
       `;
       }).join("") : `<div class="empty-state">还没有设计排期。运营在主题里选择协助设计师后会自动生成，也可以手动添加。</div>`}
@@ -1407,7 +1455,8 @@ function openDesignTaskEditor(id = "") {
       textField("dueDate", "设计截止时间", item.dueDate || ""),
       selectField("status", "设计状态", item.status || "待设计", ["待设计", "设计中", "待确认", "已完成"].map((value) => [value, value])),
       selectField("delayed", "是否延期", item.delayed ? "true" : "false", [["false", "未延期"], ["true", "已延期"]]),
-      textField("assetUrl", "成品文件/链接", item.assetUrl || ""),
+      textareaField("assetUrl", "成品文件/链接，每行一个，支持多图", item.assetUrl || ""),
+      `<label class="wide"><span>上传多图</span><input id="designAssetFiles" type="file" accept="image/*" multiple /></label>`,
       textareaField("note", "备注", item.note || ""),
     ],
     deleteLabel: item.id ? "删除设计需求" : "",
@@ -1430,6 +1479,9 @@ function openDesignTaskEditor(id = "") {
       if (index >= 0) data.designTasks[index] = next;
       else data.designTasks.push(next);
       saveAndRefresh();
+    },
+    onMount() {
+      $("#designAssetFiles")?.addEventListener("change", handleDesignAssetFiles);
     },
   });
 }
@@ -1491,6 +1543,38 @@ function uploadPublicDocFile(file) {
     saveAndRefresh();
   };
   reader.readAsDataURL(file);
+}
+
+function handleDesignAssetFiles(event) {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  if (totalSize > 2 * 1024 * 1024) {
+    alert("多图总大小超过 2MB。当前静态站点更适合保存云盘链接，请先上传到云盘，再把链接粘贴到成品文件/链接里。");
+    event.target.value = "";
+    return;
+  }
+  Promise.all(files.map(readFileAsDataUrl)).then((urls) => {
+    const textarea = document.querySelector('[name="assetUrl"]');
+    const existing = textarea.value.trim();
+    textarea.value = [existing, ...urls].filter(Boolean).join("\n");
+    event.target.value = "";
+  });
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function assetSummary(assetUrl = "") {
+  const count = String(assetUrl || "").split(/\n+/).map((item) => item.trim()).filter(Boolean).length;
+  if (!count) return "未上传";
+  return count === 1 ? "1 个文件" : `${count} 个文件`;
 }
 
 function openApiConnectionEditor(id = "") {
@@ -2112,6 +2196,11 @@ function bindEvents() {
   });
   $("#seriesFilter").addEventListener("change", (event) => {
     activeSeries = event.target.value;
+    renderFilters();
+    renderCalendar();
+  });
+  $("#weekFilter").addEventListener("change", (event) => {
+    activeCalendarWeek = event.target.value;
     renderCalendar();
   });
   $("#contentSearch").addEventListener("input", (event) => renderContentTable(event.target.value));

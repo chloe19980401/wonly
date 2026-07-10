@@ -745,6 +745,13 @@ h1 {
   font-size: 13px;
 }
 
+.filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
 select,
 .search-box,
 .content-table-wrap {
