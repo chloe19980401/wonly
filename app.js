@@ -1099,12 +1099,12 @@ function renderContentTable(keyword = "") {
 
 function normalizeKr(krItem = {}) {
   const name = String(krItem.name || "").trim();
-  const inferredTarget = Number(krItem.target || String(name).match(/(\d+(?:\.\d+)?)/)?.[1] || 1);
+  const inferredTarget = Math.round(Number(krItem.target || String(name).match(/(\d+(?:\.\d+)?)/)?.[1] || 1));
   return {
     ...krItem,
     name,
     target: Number.isFinite(inferredTarget) && inferredTarget > 0 ? inferredTarget : 1,
-    actual: Number(krItem.actual || 0),
+    actual: Math.max(0, Math.round(Number(krItem.actual || 0))),
     unit: krItem.unit || inferKrUnit(name),
   };
 }
@@ -1192,7 +1192,7 @@ function renderOkr() {
                   <div class="kr-metric-row">
                     <span>${krItem.name}</span>
                     <label>
-                      <input type="number" step="0.1" value="${escapeAttr(krItem.actual || 0)}" ${canUpdate ? "" : "disabled"} data-okr-actual="${okr.id}" data-objective-index="${objectiveIndex}" data-kr-index="${krIndex}" />
+                      <input type="number" step="1" min="0" value="${escapeAttr(Math.round(krItem.actual || 0))}" ${canUpdate ? "" : "disabled"} data-okr-actual="${okr.id}" data-objective-index="${objectiveIndex}" data-kr-index="${krIndex}" />
                       <b>/ ${krItem.target}${krItem.unit || ""}</b>
                     </label>
                   </div>
@@ -1221,7 +1221,8 @@ function updateOkrActual(input) {
   normalizeOkrMetrics(okr);
   const keyResult = okr.objectives?.[objectiveIndex]?.keyResults?.[krIndex];
   if (!keyResult) return;
-  keyResult.actual = Math.max(0, Number(input.value || 0));
+  keyResult.actual = Math.max(0, Math.round(Number(input.value || 0)));
+  input.value = keyResult.actual;
   okr.keyResults = okr.objectives.flatMap((objective) => objective.keyResults);
   saveData();
   renderOkr();
@@ -2282,8 +2283,8 @@ function okrKeyResultRow(kr, index) {
     <div class="okr-kr-row">
       <span class="okr-index" data-kr-index>KR${index + 1}</span>
       <input name="krName" value="${escapeAttr(item.name || "")}" placeholder="填写可量化指标" />
-      <input type="number" step="0.1" name="krTarget" value="${escapeAttr(item.target || 0)}" placeholder="目标" />
-      <input type="number" step="0.1" name="krActual" value="${escapeAttr(item.actual || 0)}" placeholder="实际" />
+      <input type="number" step="1" min="0" name="krTarget" value="${escapeAttr(Math.round(item.target || 0))}" placeholder="目标" />
+      <input type="number" step="1" min="0" name="krActual" value="${escapeAttr(Math.round(item.actual || 0))}" placeholder="实际" />
       <input name="krUnit" value="${escapeAttr(item.unit || "")}" placeholder="单位" />
       <button class="icon-button" type="button" data-remove-kr title="删除 KR" aria-label="删除 KR">×</button>
     </div>
@@ -2304,8 +2305,8 @@ function collectOkrObjectivesFromEditor() {
     const title = block.querySelector('[name="objectiveTitle"]').value.trim();
     const keyResults = Array.from(block.querySelectorAll(".okr-kr-row")).map((row) => ({
       name: row.querySelector('[name="krName"]').value.trim(),
-      target: Number(row.querySelector('[name="krTarget"]')?.value || 0),
-      actual: Number(row.querySelector('[name="krActual"]')?.value || 0),
+      target: Math.max(0, Math.round(Number(row.querySelector('[name="krTarget"]')?.value || 0))),
+      actual: Math.max(0, Math.round(Number(row.querySelector('[name="krActual"]')?.value || 0))),
       unit: row.querySelector('[name="krUnit"]')?.value.trim() || "",
     })).filter((kr) => kr.name);
     return { id: `o-${objectiveIndex + 1}`, title, keyResults };
