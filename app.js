@@ -98,6 +98,7 @@ const SEEDED_TEAM_ACCOUNTS = [
 ];
 const CONTENT_TYPES = ["视频", "图文"];
 const PUBLISH_PLATFORMS = ["YouTube", "TikTok", "Instagram", "Facebook", "LinkedIn"];
+const PUBLISH_TAGS = ["未发布", "按时发布", "未按时发布"];
 const SERIES_MONTH_OPTIONS = ["2026-07", "2026-08", "2026-09"];
 const API_PLATFORMS = [
   ["youtube", "YouTube Data API"],
@@ -299,7 +300,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 function topic(title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl) {
-  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, platforms: [], contentType: "视频", referenceType: "图片", designer: "" };
+  return { id: idFrom(title), title, subtitle, seriesId, owner, month, status, okrKey, bundles, references, script, shoot, publish, postUrl, publishedAt: "", publishTag: "未发布", platforms: [], contentType: "视频", referenceType: "图片", designer: "" };
 }
 
 function buildSuperFactoryTopics() {
@@ -662,6 +663,9 @@ function normalizeData(next) {
       item.referenceType = "图片";
       changed = true;
     }
+    const beforePublishState = JSON.stringify({ publishedAt: item.publishedAt, publishTag: item.publishTag });
+    normalizePublishState(item);
+    if (beforePublishState !== JSON.stringify({ publishedAt: item.publishedAt, publishTag: item.publishTag })) changed = true;
   });
 
   if (changed) localStorage.setItem(DATA_KEY, JSON.stringify(next));
@@ -697,6 +701,38 @@ function topicPlatforms(item) {
   const selected = Array.isArray(item.platforms) ? item.platforms.filter(Boolean) : [];
   if (selected.length) return selected;
   return platformsFromBundles(item.bundles);
+}
+
+function normalizePublishState(item) {
+  if (!item.postUrl) {
+    item.publishedAt = "";
+    item.publishTag = "未发布";
+    return item;
+  }
+  if (!item.publishedAt) item.publishedAt = item.publish || todayString();
+  if (!PUBLISH_TAGS.includes(item.publishTag)) item.publishTag = publishTagForTopic(item, item.publishedAt);
+  return item;
+}
+
+function publishTagForTopic(item, actualDate = todayString()) {
+  if (!item.postUrl) return "未发布";
+  if (!item.publish) return "按时发布";
+  return compareDateOnly(actualDate, item.publish) <= 0 ? "按时发布" : "未按时发布";
+}
+
+function compareDateOnly(left, right) {
+  const leftTime = Date.parse(`${left}T00:00:00`);
+  const rightTime = Date.parse(`${right}T00:00:00`);
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) return 0;
+  return leftTime - rightTime;
+}
+
+function publishStats(topics) {
+  const published = topics.filter((item) => item.postUrl);
+  return {
+    onTime: published.filter((item) => item.publishTag === "按时发布").length,
+    late: published.filter((item) => item.publishTag === "未按时发布").length,
+  };
 }
 
 function currentPermissions() {
@@ -1133,7 +1169,7 @@ function renderContentTable() {
     <tr>
       <td class="content-title"><strong>${item.title}</strong><span>${getSeries(item.seriesId)?.name ?? ""} · ${item.subtitle} · ${item.contentType || "未选形式"}${item.designer ? ` · ${item.designer}协助` : ""}</span></td>
       <td>${[...new Set(topicPlatforms(item))].join(" / ")}</td>
-      <td><span class="status">${item.status}</span></td>
+      <td><span class="status">${item.status}</span>${item.postUrl ? `<span class="status ${item.publishTag === "未按时发布" ? "risk" : "go"}">${item.publishTag}</span>` : ""}</td>
       <td>${item.owner}</td>
       <td>${item.okrKey}</td>
       <td>${item.postUrl ? `<a href="${item.postUrl}" target="_blank" rel="noreferrer">${platformFromUrl(item.postUrl)}</a>` : "未上传"}</td>
@@ -1285,6 +1321,7 @@ function dataForTopic(item) {
 
 function renderAnalytics() {
   const monthTopics = data.topics.filter((item) => item.month === activeMonth && canSeeTopic(item));
+  const timing = publishStats(monthTopics);
   const totalViews = monthTopics.reduce((sum, item) => sum + dataForTopic(item).views, 0);
   const avgCompletion = average(monthTopics.map((item) => dataForTopic(item).completion).filter(Boolean));
   const avgEngagement = average(monthTopics.map((item) => dataForTopic(item).engagement).filter(Boolean));
@@ -1294,6 +1331,8 @@ function renderAnalytics() {
     ["平均完播率", `${avgCompletion}%`, avgCompletion],
     ["平均互动率", `${avgEngagement}%`, avgEngagement * 10],
     ["粉丝增长", totalFollowers, 66],
+    ["按时发布", timing.onTime, timing.onTime ? 100 : 0],
+    ["未按时发布", timing.late, timing.late ? 100 : 0],
   ].map((metric) => `
     <article class="metric-card">
       <span>${metric[0]}</span>
@@ -1302,7 +1341,7 @@ function renderAnalytics() {
     </article>
   `).join("");
   $("#postBoard").innerHTML = `
-    <div class="post-row post-head"><span>主题</span><span>平台</span><span>播放</span><span>完播</span><span>互动</span><span>判断</span></div>
+    <div class="post-row post-head"><span>主题</span><span>平台</span><span>发布</span><span>播放</span><span>完播</span><span>互动</span><span>判断</span></div>
     ${monthTopics.map((item) => {
       const stats = dataForTopic(item);
       const decision = !item.postUrl ? "待链接" : stats.completion >= 45 && stats.engagement >= 6 ? "Go" : stats.completion >= 32 ? "优化重测" : "No-Go";
@@ -1310,6 +1349,7 @@ function renderAnalytics() {
         <div class="post-row ${canEditTopic(item) ? "editable-row" : ""}" ${canEditTopic(item) ? `data-edit-topic="${item.id}"` : ""}>
           <div><strong>${item.title}</strong><span>${item.owner} · ${getSeries(item.seriesId)?.name ?? ""}</span></div>
           <span>${item.postUrl ? platformFromUrl(item.postUrl) : "未上传"}</span>
+          <span>${item.postUrl ? `<i class="status ${item.publishTag === "未按时发布" ? "risk" : "go"}">${item.publishTag}</i>` : "-"}</span>
           <span>${stats.views ? stats.views.toLocaleString("zh-CN") : "-"}</span>
           <span>${stats.completion ? `${stats.completion}%` : "-"}</span>
           <span>${stats.engagement ? `${stats.engagement}%` : "-"}</span>
@@ -1541,6 +1581,10 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
       textField("shoot", "预计拍摄时间", item.shoot),
       textField("publish", "预计发布时间", item.publish),
       textField("postUrl", "帖子链接", item.postUrl || ""),
+      ...(canManageSystem() ? [
+        textField("publishedAt", "实际上传日期", item.publishedAt || ""),
+        selectField("publishTag", "发布标签", item.publishTag || "未发布", PUBLISH_TAGS.map((value) => [value, value])),
+      ] : []),
       numberField("views", "播放/展示", item.views || 0),
       numberField("completion", "完播率 %", item.completion || 0),
       numberField("engagement", "互动率 %", item.engagement || 0),
@@ -1561,6 +1605,15 @@ function openTopicEditor(id = "", defaultSeriesId = "") {
         bundles: values.bundles.split(",").map((value) => value.trim()).filter(Boolean),
         references: values.references.split("\n").map((value) => value.trim()).filter(Boolean),
       };
+      if (!next.postUrl) {
+        next.publishedAt = "";
+        next.publishTag = "未发布";
+      } else {
+        const linkChanged = next.postUrl !== (item.postUrl || "");
+        if (linkChanged || !next.publishedAt) next.publishedAt = canManageSystem() && values.publishedAt ? values.publishedAt : todayString();
+        if (canManageSystem() && PUBLISH_TAGS.includes(values.publishTag)) next.publishTag = values.publishTag;
+        else next.publishTag = publishTagForTopic(next, next.publishedAt);
+      }
       const index = data.topics.findIndex((topicItem) => topicItem.id === item.id);
       if (index >= 0) data.topics[index] = next;
       else data.topics.push(next);
