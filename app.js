@@ -290,6 +290,9 @@ let activeMonth = data.activeMonth;
 let activeSeriesMonth = "all";
 let activeSeries = "all";
 let activeCalendarWeek = "all";
+let activeContentTopic = "all";
+let activeContentOwner = "all";
+let activeContentPlatform = "all";
 let currentAccount = null;
 
 const $ = (selector) => document.querySelector(selector);
@@ -875,7 +878,7 @@ function renderAll() {
   renderPlatforms();
   renderFilters();
   renderCalendar();
-  renderContentTable($("#contentSearch")?.value ?? "");
+  renderContentTable();
   renderOkrMonths();
   renderOkr();
   renderAnalytics();
@@ -1017,6 +1020,34 @@ function renderFilters() {
   if (!visibleWeeks.some((item) => item.id === activeCalendarWeek)) activeCalendarWeek = "all";
   $("#weekFilter").innerHTML = `<option value="all">全部周次</option>${visibleWeeks.map((item) => `<option value="${item.id}">${item.label}</option>`).join("")}`;
   $("#weekFilter").value = activeCalendarWeek;
+  renderContentFilters();
+}
+
+function renderContentFilters() {
+  const visibleTopics = data.topics.filter(canSeeTopic);
+  const topicOptions = visibleTopics
+    .slice()
+    .sort((a, b) => a.title.localeCompare(b.title, "zh-CN"))
+    .map((item) => [item.id, item.title]);
+  const ownerOptions = [...new Set(visibleTopics.map((item) => item.owner).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "zh-CN"))
+    .map((owner) => [owner, owner]);
+  const platformOptions = [...new Set(visibleTopics.flatMap((item) => topicPlatforms(item)).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "zh-CN"))
+    .map((platform) => [platform, platform]);
+  activeContentTopic = renderSelectOptions("#contentTopicFilter", activeContentTopic, "全部主题", topicOptions);
+  activeContentOwner = renderSelectOptions("#contentOwnerFilter", activeContentOwner, "全部负责人", ownerOptions);
+  activeContentPlatform = renderSelectOptions("#contentPlatformFilter", activeContentPlatform, "全部平台", platformOptions);
+}
+
+function renderSelectOptions(selector, currentValue, allLabel, options) {
+  const select = $(selector);
+  if (!select) return "all";
+  const exists = options.some(([value]) => value === currentValue);
+  const value = exists ? currentValue : "all";
+  select.innerHTML = `<option value="all">${allLabel}</option>${options.map(([optionValue, optionLabel]) => `<option value="${escapeAttr(optionValue)}">${optionLabel}</option>`).join("")}`;
+  select.value = value;
+  return value;
 }
 
 function calendarWeekOptions() {
@@ -1078,11 +1109,13 @@ function renderCalendar() {
   }).join("");
 }
 
-function renderContentTable(keyword = "") {
-  const lower = keyword.trim().toLowerCase();
+function renderContentTable() {
   const rows = data.topics.filter((item) => {
-    const searchable = [item.title, item.subtitle, item.owner, item.status, item.okrKey, item.postUrl, topicPlatforms(item).join(" ")].join(" ").toLowerCase();
-    return canSeeTopic(item) && searchable.includes(lower);
+    const platforms = topicPlatforms(item);
+    return canSeeTopic(item)
+      && (activeContentTopic === "all" || item.id === activeContentTopic)
+      && (activeContentOwner === "all" || item.owner === activeContentOwner)
+      && (activeContentPlatform === "all" || platforms.includes(activeContentPlatform));
   });
   $("#contentRows").innerHTML = rows.length ? rows.map((item) => `
     <tr>
@@ -2401,7 +2434,18 @@ function bindEvents() {
     activeCalendarWeek = event.target.value;
     renderCalendar();
   });
-  $("#contentSearch").addEventListener("input", (event) => renderContentTable(event.target.value));
+  $("#contentTopicFilter")?.addEventListener("change", (event) => {
+    activeContentTopic = event.target.value;
+    renderContentTable();
+  });
+  $("#contentOwnerFilter")?.addEventListener("change", (event) => {
+    activeContentOwner = event.target.value;
+    renderContentTable();
+  });
+  $("#contentPlatformFilter")?.addEventListener("change", (event) => {
+    activeContentPlatform = event.target.value;
+    renderContentTable();
+  });
   $("#exportButton").addEventListener("click", () => {
     if (!canExport()) return alert(roleLockedMessage());
     downloadSchedule();

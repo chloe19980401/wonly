@@ -147,7 +147,11 @@
               <h2>系列主题库</h2>
               <p>每个主题都包含负责人、OKR、参考素材、脚本、拍摄时间、发布时间和帖子链接。</p>
             </div>
-            <div class="search-box"><span>⌕</span><input id="contentSearch" type="search" placeholder="搜索主题、负责人、平台" /></div>
+            <div class="filter-row library-filters">
+              <label class="select-label"><span>主题</span><select id="contentTopicFilter"><option value="all">全部主题</option></select></label>
+              <label class="select-label"><span>负责人</span><select id="contentOwnerFilter"><option value="all">全部负责人</option></select></label>
+              <label class="select-label"><span>平台</span><select id="contentPlatformFilter"><option value="all">全部平台</option></select></label>
+            </div>
           </div>
           <div class="content-table-wrap">
             <table class="content-table">
