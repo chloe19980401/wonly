@@ -5,8 +5,8 @@ const DESIGNER_PASSWORD_HASH = "2b57de2d606b54b194dc7fbfdbb31a013cae5363e0116998
 const SESSION_KEY = "wonly-admin-session";
 const DATA_KEY = "wonly-editable-social-system-v3";
 const TEAM_OKR_VERSION = "2026-07-team-okr-v7";
-const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v4";
-const SUPER_FACTORY_TOPIC_SOURCE = "super-factory-topic-import-v4";
+const SUPER_FACTORY_TOPIC_VERSION = "2026-07-super-factory-topics-v5";
+const SUPER_FACTORY_TOPIC_SOURCE = "super-factory-topic-import-v5";
 
 const ROLE_LABELS = {
   admin: "管理员",
@@ -387,7 +387,7 @@ function buildSuperFactoryTopics() {
   return items.map((item, index) => {
     const owner = superFactoryOwner(item, index);
     const shoot = scheduledJulyWorkday(index, owner, 0);
-    const publish = scheduledJulyWorkday(index, owner, 2);
+    const publish = scheduledPublishWorkday(index);
     return {
       id: `sf-${idFrom(item.title)}`,
       title: item.title,
@@ -423,6 +423,18 @@ function scheduledJulyWorkday(index, owner, extraDays = 0) {
   const date = new Date(2026, 6, 10 + (index % 22) + extraDays);
   let guard = 0;
   while ((!isWorkday(date) || isUnavailable(owner, date)) && guard < 40) {
+    date.setDate(date.getDate() + 1);
+    guard += 1;
+  }
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function scheduledPublishWorkday(index) {
+  const date = new Date(2026, 6, 22 + (index % 22));
+  let guard = 0;
+  while (!isWorkday(date) && guard < 40) {
     date.setDate(date.getDate() + 1);
     guard += 1;
   }
